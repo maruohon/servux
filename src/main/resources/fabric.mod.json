@@ -1,0 +1,30 @@
+{
+    "schemaVersion": 1,
+    "id": "servux",
+    "name": "ServuX",
+    "version": "${mod_version}",
+
+    "description": "Server-side support and integration for masa's client mods",
+    "authors": [
+        "masa"
+    ],
+    "contact": {
+        "homepage": "https://minecraft.curseforge.com/projects/servux",
+        "sources": "https://github.com/maruohon/servux",
+        "twitter": "https://twitter.com/maruohon",
+        "discord": "https://discordapp.com/channels/211786369951989762/453662800460644354/"
+    },
+
+    "license": "LGPLv3",
+
+    "environment": "server",
+    "entrypoints": {
+        "main": [
+            "fi.dy.masa.servux.ServuX"
+        ]
+    },
+    "mixins": [
+        "mixins.servux.json"
+    ],
+    "depends": {}
+}
