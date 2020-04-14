@@ -20,7 +20,7 @@
     "environment": "server",
     "entrypoints": {
         "main": [
-            "fi.dy.masa.servux.ServuX"
+            "fi.dy.masa.servux.Servux"
         ]
     },
     "mixins": [

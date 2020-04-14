@@ -4,6 +4,10 @@
     "compatibilityLevel": "JAVA_8",
     "minVersion": "0.7",
     "server": [
+        "IMixinCustomPayloadC2SPacket",
+        "MixinMinecraftServer",
+        "MixinServerPlayNetworkHandler",
+        "MixinThreadedAnvilChunkStorage"
     ],
     "injectors": {
         "defaultRequire": 1
