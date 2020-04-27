@@ -59,6 +59,7 @@ public class ServerPacketChannelHandler
     {
         IMixinCustomPayloadC2SPacket accessor = ((IMixinCustomPayloadC2SPacket) packet);
         Identifier channel = accessor.getChannel();
+        PacketByteBuf data = accessor.getData();
 
         IPluginChannelHandler handler = this.handlers.get(channel);
 
@@ -76,7 +77,9 @@ public class ServerPacketChannelHandler
         }
         else if (channel.equals(REGISTER))
         {
-            for (Identifier regChannel : getChannels(accessor.getData()))
+            data.readerIndex(0);
+
+            for (Identifier regChannel : getChannels(data))
             {
                 handler = this.subscribableHandlers.get(regChannel);
 
@@ -86,11 +89,15 @@ public class ServerPacketChannelHandler
                 }
             }
 
+            data.readerIndex(0);
+
             return true;
         }
         else if (channel.equals(UNREGISTER))
         {
-            for (Identifier unregChannel : getChannels(accessor.getData()))
+            data.readerIndex(0);
+
+            for (Identifier unregChannel : getChannels(data))
             {
                 handler = this.subscribableHandlers.get(unregChannel);
 
@@ -99,6 +106,8 @@ public class ServerPacketChannelHandler
                     handler.unsubscribe(netHandler);
                 }
             }
+
+            data.readerIndex(0);
 
             return true;
         }
