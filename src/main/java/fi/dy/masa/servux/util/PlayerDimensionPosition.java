@@ -36,6 +36,6 @@ public class PlayerDimensionPosition
     public void setPosition(PlayerEntity player)
     {
         this.dimensionType = player.getEntityWorld().getDimension().getType();
-        this.pos = new BlockPos(player);
+        this.pos = player.getBlockPos();
     }
 }

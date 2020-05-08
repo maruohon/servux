@@ -5,14 +5,14 @@ import java.util.Map;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
-import net.minecraft.client.network.packet.CustomPayloadS2CPacket;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.PacketListener;
+import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
+import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.network.packet.CustomPayloadC2SPacket;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.PacketByteBuf;
 import fi.dy.masa.servux.mixin.IMixinCustomPayloadC2SPacket;
 import io.netty.buffer.Unpooled;
 

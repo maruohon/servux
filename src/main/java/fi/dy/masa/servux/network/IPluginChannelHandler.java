@@ -1,8 +1,8 @@
 package fi.dy.masa.servux.network;
 
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.PacketByteBuf;
 
 public interface IPluginChannelHandler
 {
