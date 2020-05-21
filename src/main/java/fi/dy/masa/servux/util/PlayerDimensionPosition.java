@@ -16,12 +16,12 @@ public class PlayerDimensionPosition
 
     public boolean dimensionChanged(PlayerEntity player)
     {
-        return this.dimensionType != player.getEntityWorld().getDimension().getType();
+        return this.dimensionType != player.getEntityWorld().getDimension();
     }
 
     public boolean needsUpdate(PlayerEntity player, int distanceThreshold)
     {
-        if (player.getEntityWorld().getDimension().getType() != this.dimensionType)
+        if (player.getEntityWorld().getDimension() != this.dimensionType)
         {
             return true;
         }
@@ -35,7 +35,7 @@ public class PlayerDimensionPosition
 
     public void setPosition(PlayerEntity player)
     {
-        this.dimensionType = player.getEntityWorld().getDimension().getType();
+        this.dimensionType = player.getEntityWorld().getDimension();
         this.pos = player.getBlockPos();
     }
 }
