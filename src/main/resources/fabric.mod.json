@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "id": "servux",
-    "name": "ServuX",
+    "name": "Servux",
     "version": "${mod_version}",
 
     "description": "Server-side support and integration for masa's client mods",
