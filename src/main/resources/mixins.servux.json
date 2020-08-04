@@ -3,7 +3,7 @@
     "package": "fi.dy.masa.servux.mixin",
     "compatibilityLevel": "JAVA_8",
     "minVersion": "0.7",
-    "server": [
+    "mixins": [
         "IMixinCustomPayloadC2SPacket",
         "MixinMinecraftServer",
         "MixinServerPlayNetworkHandler",
