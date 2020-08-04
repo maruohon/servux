@@ -1,10 +1,8 @@
 package fi.dy.masa.servux.network;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 import com.google.common.base.Charsets;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -118,9 +116,24 @@ public class ServerPacketChannelHandler
     private static List<Identifier> getChannels(PacketByteBuf buff)
     {
         buff.readerIndex(0);
+
         byte[] bytes = new byte[buff.readableBytes()];
         buff.readBytes(bytes);
         String channelString = new String(bytes, Charsets.UTF_8);
-        return Arrays.stream(channelString.split("\0")).map(Identifier::new).collect(Collectors.toList());
+        List<Identifier> channels = new ArrayList<>();
+
+        for (String channel : channelString.split("\0"))
+        {
+            try
+            {
+                Identifier id = new Identifier(channel);
+                channels.add(id);
+            }
+            catch (Exception ignore)
+            {
+            }
+        }
+
+        return channels;
     }
 }
