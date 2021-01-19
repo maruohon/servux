@@ -11,7 +11,7 @@ import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import fi.dy.masa.servux.network.ServerPacketChannelHandler;
 
-@Mixin(ServerPlayNetworkHandler.class)
+@Mixin(value = ServerPlayNetworkHandler.class, priority = 998)
 public abstract class MixinServerPlayNetworkHandler
 {
     @Shadow public ServerPlayerEntity player;

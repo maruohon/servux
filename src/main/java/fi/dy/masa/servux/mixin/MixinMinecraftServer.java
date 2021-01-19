@@ -1,5 +1,6 @@
 package fi.dy.masa.servux.mixin;
 
+import java.util.function.BooleanSupplier;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -17,7 +18,7 @@ public abstract class MixinMinecraftServer
     @Shadow private int ticks;
 
     @Inject(method = "tick", at = @At("RETURN"))
-    private void onTickEnd(java.util.function.BooleanSupplier supplier, CallbackInfo ci)
+    private void onTickEnd(BooleanSupplier supplier, CallbackInfo ci)
     {
         this.profiler.push("servux_tick");
         DataProviderManager.INSTANCE.tickProviders((MinecraftServer) (Object) this, this.ticks);
