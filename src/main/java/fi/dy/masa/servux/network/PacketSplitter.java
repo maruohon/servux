@@ -12,6 +12,7 @@ import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
+import fi.dy.masa.servux.network.util.PacketUtils;
 import io.netty.buffer.Unpooled;
 
 /**
@@ -35,7 +36,7 @@ public class PacketSplitter
     {
         int len = packet.writerIndex();
 
-        packet.resetReaderIndex();
+        packet.readerIndex(0);
 
         for (int offset = 0; offset < len; offset += payloadLimit)
         {
@@ -101,6 +102,7 @@ public class PacketSplitter
         @Nullable
         private PacketByteBuf receive(PacketByteBuf data, int maxLength)
         {
+            data = PacketUtils.slice(data);
             data.readerIndex(0);
 
             if (this.expectedSize < 0)
@@ -116,7 +118,6 @@ public class PacketSplitter
             }
 
             this.received.writeBytes(data.readBytes(data.readableBytes()));
-            data.readerIndex(0);
 
             if (this.received.writerIndex() >= this.expectedSize)
             {
