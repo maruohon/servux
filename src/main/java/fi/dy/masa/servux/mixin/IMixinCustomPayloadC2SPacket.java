@@ -10,8 +10,8 @@ import net.minecraft.util.Identifier;
 public interface IMixinCustomPayloadC2SPacket
 {
     @Accessor("channel")
-    Identifier getChannel();
+    Identifier servux_getChannel();
 
     @Accessor("data")
-    PacketByteBuf getData();
+    PacketByteBuf servux_getData();
 }

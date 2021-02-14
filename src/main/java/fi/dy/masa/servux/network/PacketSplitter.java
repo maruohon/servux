@@ -8,42 +8,28 @@ import org.apache.commons.lang3.tuple.Pair;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.PacketListener;
-import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
-import fi.dy.masa.servux.mixin.IMixinCustomPayloadC2SPacket;
 import io.netty.buffer.Unpooled;
 
 /**
  * Network packet splitter code from QuickCarpet by skyrising
  * @author skyrising
- *
  */
 public class PacketSplitter
 {
     public static final int MAX_TOTAL_PER_PACKET_S2C = 1048576;
     public static final int MAX_PAYLOAD_PER_PACKET_S2C = MAX_TOTAL_PER_PACKET_S2C - 5;
-    public static final int MAX_TOTAL_PER_PACKET_C2S = 32767;
-    public static final int MAX_PAYLOAD_PER_PACKET_C2S = MAX_TOTAL_PER_PACKET_C2S - 5;
     public static final int DEFAULT_MAX_RECEIVE_SIZE_C2S = 1048576;
-    public static final int DEFAULT_MAX_RECEIVE_SIZE_S2C = 67108864;
 
     private static final Map<Pair<PacketListener, Identifier>, ReadingSession> READING_SESSIONS = new HashMap<>();
 
-    public static void send(ServerPlayNetworkHandler networkHandler, Identifier channel, PacketByteBuf packet)
+    public static void send(PacketByteBuf packet, Identifier channel, ServerPlayNetworkHandler networkHandler)
     {
         send(packet, MAX_PAYLOAD_PER_PACKET_S2C, buf -> networkHandler.sendPacket(new CustomPayloadS2CPacket(channel, buf)));
     }
-
-    /*
-    @Environment(EnvType.CLIENT)
-    public static void send(ClientPlayNetworkHandler networkHandler, Identifier channel, PacketByteBuf packet)
-    {
-        send(packet, MAX_PAYLOAD_PER_PACKET_C2S, buf -> networkHandler.sendPacket(new CustomPayloadC2SPacket(channel, buf)));
-    }
-    */
 
     private static void send(PacketByteBuf packet, int payloadLimit, Consumer<PacketByteBuf> sender)
     {
@@ -56,15 +42,12 @@ public class PacketSplitter
             int thisLen = Math.min(len - offset, payloadLimit);
             PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer(thisLen));
 
-            buf.resetWriterIndex();
-
             if (offset == 0)
             {
                 buf.writeVarInt(len);
             }
 
             buf.writeBytes(packet, thisLen);
-
             sender.accept(buf);
         }
 
@@ -72,62 +55,36 @@ public class PacketSplitter
     }
 
     @Nullable
-    public static PacketByteBuf receive(ServerPlayNetworkHandler networkHandler, CustomPayloadC2SPacket message)
+    public static PacketByteBuf receive(Identifier channel, PacketByteBuf data, ServerPlayNetworkHandler networkHandler)
     {
-        return receive(networkHandler, message, DEFAULT_MAX_RECEIVE_SIZE_C2S);
+        return receive(channel, data, DEFAULT_MAX_RECEIVE_SIZE_C2S, networkHandler);
     }
 
     @Nullable
-    private static PacketByteBuf receive(ServerPlayNetworkHandler networkHandler, CustomPayloadC2SPacket message, int maxLength)
+    private static PacketByteBuf receive(Identifier channel, PacketByteBuf data, int maxLength, ServerPlayNetworkHandler networkHandler)
     {
-        IMixinCustomPayloadC2SPacket messageAccessor = (IMixinCustomPayloadC2SPacket) message;
-        Pair<PacketListener, Identifier> key = Pair.of(networkHandler, messageAccessor.getChannel());
-
-        return READING_SESSIONS.computeIfAbsent(key, ReadingSession::new).receive(messageAccessor.getData(), maxLength);
-    }
-
-    /*
-    @Nullable
-    public static PacketByteBuf receive(ClientPlayPacketListener networkHandler, CustomPayloadS2CPacket message)
-    {
-        return receive(networkHandler, message, DEFAULT_MAX_RECEIVE_SIZE_S2C);
-    }
-
-    @Nullable
-    private static PacketByteBuf receive(ClientPlayPacketListener networkHandler, CustomPayloadS2CPacket message, int maxLength)
-    {
-        Pair<PacketListener, Identifier> key = Pair.of(networkHandler, message.getChannel());
-
-        return READING_SESSIONS.computeIfAbsent(key, ReadingSession::new).receive(message.getData(), maxLength);
-    }
-    */
-
-    /**
-     * Sends a packet type ID as a VarInt, and then the given Compound tag.
-     * @param player
-     * @param channel
-     * @param packetType
-     * @param data
-     */
-    public static void sendPacketTypeAndCompound(ServerPlayerEntity player, Identifier channel, int packetType, CompoundTag data)
-    {
-        sendPacketTypeAndCompound(player.networkHandler, channel, packetType, data);
+        Pair<PacketListener, Identifier> key = Pair.of(networkHandler, channel);
+        return READING_SESSIONS.computeIfAbsent(key, ReadingSession::new).receive(data, maxLength);
     }
 
     /**
      * Sends a packet type ID as a VarInt, and then the given Compound tag.
-     * @param networkHandler
-     * @param channel
-     * @param packetType
-     * @param data
      */
-    public static void sendPacketTypeAndCompound(ServerPlayNetworkHandler networkHandler, Identifier channel, int packetType, CompoundTag data)
+    public static void sendPacketTypeAndCompound(Identifier channel, int packetType, CompoundTag data, ServerPlayerEntity player)
+    {
+        sendPacketTypeAndCompound(channel, packetType, data, player.networkHandler);
+    }
+
+    /**
+     * Sends a packet type ID as a VarInt, and then the given Compound tag.
+     */
+    public static void sendPacketTypeAndCompound(Identifier channel, int packetType, CompoundTag data, ServerPlayNetworkHandler networkHandler)
     {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeVarInt(packetType);
         buf.writeCompoundTag(data);
 
-        send(networkHandler, channel, buf);
+        send(buf, channel, networkHandler);
     }
 
     private static class ReadingSession

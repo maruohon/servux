@@ -111,7 +111,7 @@ public class StructureDataProvider extends DataProviderBase
 
         if (this.registeredPlayers.containsKey(uuid) == false)
         {
-            PacketSplitter.sendPacketTypeAndCompound(player, StructureDataPacketHandler.CHANNEL, StructureDataPacketHandler.PACKET_S2C_METADATA, this.metadata);
+            PacketSplitter.sendPacketTypeAndCompound(StructureDataPacketHandler.CHANNEL, StructureDataPacketHandler.PACKET_S2C_METADATA, this.metadata, player);
 
             this.registeredPlayers.put(uuid, new PlayerDimensionPosition(player));
             int tickCounter = player.getServer().getTicks();
@@ -378,7 +378,7 @@ public class StructureDataProvider extends DataProviderBase
             CompoundTag tag = new CompoundTag();
             tag.put("Structures", structureList);
 
-            PacketSplitter.sendPacketTypeAndCompound(player, StructureDataPacketHandler.CHANNEL, StructureDataPacketHandler.PACKET_S2C_STRUCTURE_DATA, tag);
+            PacketSplitter.sendPacketTypeAndCompound(StructureDataPacketHandler.CHANNEL, StructureDataPacketHandler.PACKET_S2C_STRUCTURE_DATA, tag, player);
         }
     }
 

@@ -113,12 +113,12 @@ public class ServerPacketChannelHandler
         return false;
     }
 
-    private static List<Identifier> getChannels(PacketByteBuf buff)
+    private static List<Identifier> getChannels(PacketByteBuf buf)
     {
-        buff.readerIndex(0);
+        buf.readerIndex(0);
 
-        byte[] bytes = new byte[buff.readableBytes()];
-        buff.readBytes(bytes);
+        byte[] bytes = new byte[buf.readableBytes()];
+        buf.readBytes(bytes);
         String channelString = new String(bytes, Charsets.UTF_8);
         List<Identifier> channels = new ArrayList<>();
 
