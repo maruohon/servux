@@ -56,14 +56,14 @@ public class ServerPacketChannelHandler
     public boolean processPacketFromClient(CustomPayloadC2SPacket packet, ServerPlayNetworkHandler netHandler)
     {
         IMixinCustomPayloadC2SPacket accessor = ((IMixinCustomPayloadC2SPacket) packet);
-        Identifier channel = accessor.getChannel();
-        PacketByteBuf data = accessor.getData();
+        Identifier channel = accessor.servux_getChannel();
+        PacketByteBuf data = accessor.servux_getData();
 
         IPluginChannelHandler handler = this.handlers.get(channel);
 
         if (handler != null)
         {
-            PacketByteBuf buf = PacketSplitter.receive(netHandler, packet);
+            PacketByteBuf buf = PacketSplitter.receive(channel, data, netHandler);
 
             // Finished the complete packet
             if (buf != null)
@@ -113,12 +113,12 @@ public class ServerPacketChannelHandler
         return false;
     }
 
-    private static List<Identifier> getChannels(PacketByteBuf buff)
+    private static List<Identifier> getChannels(PacketByteBuf buf)
     {
-        buff.readerIndex(0);
+        buf.readerIndex(0);
 
-        byte[] bytes = new byte[buff.readableBytes()];
-        buff.readBytes(bytes);
+        byte[] bytes = new byte[buf.readableBytes()];
+        buf.readBytes(bytes);
         String channelString = new String(bytes, Charsets.UTF_8);
         List<Identifier> channels = new ArrayList<>();
 
