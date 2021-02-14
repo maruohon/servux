@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import io.netty.buffer.Unpooled;
 import org.apache.commons.lang3.tuple.Pair;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.listener.PacketListener;
@@ -12,7 +13,7 @@ import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.PacketByteBuf;
-import io.netty.buffer.Unpooled;
+import fi.dy.masa.servux.network.util.PacketUtils;
 
 /**
  * Network packet splitter code from QuickCarpet by skyrising
@@ -35,7 +36,7 @@ public class PacketSplitter
     {
         int len = packet.writerIndex();
 
-        packet.resetReaderIndex();
+        packet.readerIndex(0);
 
         for (int offset = 0; offset < len; offset += payloadLimit)
         {
@@ -101,6 +102,7 @@ public class PacketSplitter
         @Nullable
         private PacketByteBuf receive(PacketByteBuf data, int maxLength)
         {
+            data = PacketUtils.slice(data);
             data.readerIndex(0);
 
             if (this.expectedSize < 0)
@@ -116,7 +118,6 @@ public class PacketSplitter
             }
 
             this.received.writeBytes(data.readBytes(data.readableBytes()));
-            data.readerIndex(0);
 
             if (this.received.writerIndex() >= this.expectedSize)
             {
