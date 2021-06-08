@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.PacketListener;
 import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
@@ -71,7 +71,7 @@ public class PacketSplitter
     /**
      * Sends a packet type ID as a VarInt, and then the given Compound tag.
      */
-    public static void sendPacketTypeAndCompound(Identifier channel, int packetType, CompoundTag data, ServerPlayerEntity player)
+    public static void sendPacketTypeAndCompound(Identifier channel, int packetType, NbtCompound data, ServerPlayerEntity player)
     {
         sendPacketTypeAndCompound(channel, packetType, data, player.networkHandler);
     }
@@ -79,11 +79,11 @@ public class PacketSplitter
     /**
      * Sends a packet type ID as a VarInt, and then the given Compound tag.
      */
-    public static void sendPacketTypeAndCompound(Identifier channel, int packetType, CompoundTag data, ServerPlayNetworkHandler networkHandler)
+    public static void sendPacketTypeAndCompound(Identifier channel, int packetType, NbtCompound data, ServerPlayNetworkHandler networkHandler)
     {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeVarInt(packetType);
-        buf.writeCompoundTag(data);
+        buf.writeNbt(data);
 
         send(buf, channel, networkHandler);
     }

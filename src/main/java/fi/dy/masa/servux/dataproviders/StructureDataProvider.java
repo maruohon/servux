@@ -6,8 +6,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -33,7 +33,7 @@ public class StructureDataProvider extends DataProviderBase
 
     protected final Map<UUID, PlayerDimensionPosition> registeredPlayers = new HashMap<>();
     protected final Map<UUID, Map<ChunkPos, Timeout>> timeouts = new HashMap<>();
-    protected final CompoundTag metadata = new CompoundTag();
+    protected final NbtCompound metadata = new NbtCompound();
     protected int timeout = 30 * 20;
     protected int updateInterval = 40;
     protected int retainDistance;
@@ -132,7 +132,7 @@ public class StructureDataProvider extends DataProviderBase
     protected void initialSyncStructuresToPlayerWithinRange(ServerPlayerEntity player, int chunkRadius, int tickCounter)
     {
         UUID uuid = player.getUuid();
-        ChunkPos center = player.getCameraPosition().toChunkPos();
+        ChunkPos center = player.getWatchedSection().toChunkPos();
         Map<StructureFeature<?>, LongSet> references = this.getStructureReferencesWithinRange(player.getServerWorld(), center, chunkRadius);
 
         this.timeouts.remove(uuid);
@@ -221,7 +221,7 @@ public class StructureDataProvider extends DataProviderBase
         if (positionsToUpdate.isEmpty() == false)
         {
             ServerWorld world = player.getServerWorld();
-            ChunkPos center = player.getCameraPosition().toChunkPos();
+            ChunkPos center = player.getWatchedSection().toChunkPos();
             Map<StructureFeature<?>, LongSet> references = new HashMap<>();
 
             for (ChunkPos pos : positionsToUpdate)
@@ -366,16 +366,17 @@ public class StructureDataProvider extends DataProviderBase
 
     protected void sendStructures(ServerPlayerEntity player, Map<StructureFeature<?>, LongSet> references, int tickCounter)
     {
-        Map<ChunkPos, StructureStart<?>> starts = this.getStructureStartsFromReferences(player.getServerWorld(), references);
+        ServerWorld world = player.getServerWorld();
+        Map<ChunkPos, StructureStart<?>> starts = this.getStructureStartsFromReferences(world, references);
 
         if (starts.isEmpty() == false)
         {
             this.addOrRefreshTimeouts(player.getUuid(), references, tickCounter);
 
-            ListTag structureList = this.getStructureList(starts);
+            NbtList structureList = this.getStructureList(starts, world);
             // System.out.printf("sendStructures: starts: %d -> structureList: %d. refs: %s\n", starts.size(), structureList.size(), references.keySet());
 
-            CompoundTag tag = new CompoundTag();
+            NbtCompound tag = new NbtCompound();
             tag.put("Structures", structureList);
 
             PacketSplitter.sendPacketTypeAndCompound(StructureDataPacketHandler.CHANNEL, StructureDataPacketHandler.PACKET_S2C_STRUCTURE_DATA, tag, player);
@@ -383,14 +384,14 @@ public class StructureDataProvider extends DataProviderBase
     }
 
 
-    protected ListTag getStructureList(Map<ChunkPos, StructureStart<?>> structures)
+    protected NbtList getStructureList(Map<ChunkPos, StructureStart<?>> structures, ServerWorld world)
     {
-        ListTag list = new ListTag();
+        NbtList list = new NbtList();
 
         for (Map.Entry<ChunkPos, StructureStart<?>> entry : structures.entrySet())
         {
             ChunkPos pos = entry.getKey();
-            list.add(entry.getValue().toTag(pos.x,  pos.z));
+            list.add(entry.getValue().toNbt(world, new ChunkPos(pos.x,  pos.z)));
         }
 
         return list;
