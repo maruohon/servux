@@ -2,7 +2,7 @@ package fi.dy.masa.servux.util;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.DimensionType;
 
 public class PlayerDimensionPosition
 {
@@ -16,17 +16,17 @@ public class PlayerDimensionPosition
 
     public boolean dimensionChanged(PlayerEntity player)
     {
-        return this.dimensionType != player.getEntityWorld().getDimension();
+        return this.dimensionType != player.getEntityWorld().getDimensionType();
     }
 
     public boolean needsUpdate(PlayerEntity player, int distanceThreshold)
     {
-        if (player.getEntityWorld().getDimension() != this.dimensionType)
+        if (player.getEntityWorld().getDimensionType() != this.dimensionType)
         {
             return true;
         }
 
-        BlockPos pos = player.getBlockPos();
+        BlockPos pos = player.getPosition();
 
         return Math.abs(pos.getX() - this.pos.getX()) > distanceThreshold ||
                Math.abs(pos.getY() - this.pos.getY()) > distanceThreshold ||
@@ -35,7 +35,7 @@ public class PlayerDimensionPosition
 
     public void setPosition(PlayerEntity player)
     {
-        this.dimensionType = player.getEntityWorld().getDimension();
-        this.pos = player.getBlockPos();
+        this.dimensionType = player.getEntityWorld().getDimensionType();
+        this.pos = player.getPosition();
     }
 }

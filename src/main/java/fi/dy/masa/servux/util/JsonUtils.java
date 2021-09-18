@@ -14,8 +14,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.vector.Vector3i;
 import fi.dy.masa.servux.Servux;
 
 public class JsonUtils
@@ -288,7 +288,7 @@ public class JsonUtils
         return blockPosFromJson(obj, name) != null;
     }
 
-    public static JsonArray blockPosToJson(Vec3i pos)
+    public static JsonArray blockPosToJson(Vector3i pos)
     {
         JsonArray arr = new JsonArray();
 
@@ -326,7 +326,7 @@ public class JsonUtils
         return vec3dFromJson(obj, name) != null;
     }
 
-    public static JsonArray vec3dToJson(Vec3d vec)
+    public static JsonArray vec3dToJson(Vector3d vec)
     {
         JsonArray arr = new JsonArray();
 
@@ -338,7 +338,7 @@ public class JsonUtils
     }
 
     @Nullable
-    public static Vec3d vec3dFromJson(JsonObject obj, String name)
+    public static Vector3d vec3dFromJson(JsonObject obj, String name)
     {
         if (hasArray(obj, name))
         {
@@ -348,9 +348,9 @@ public class JsonUtils
             {
                 try
                 {
-                    return new Vec3d(arr.get(0).getAsDouble(), arr.get(1).getAsDouble(), arr.get(2).getAsDouble());
+                    return new Vector3d(arr.get(0).getAsDouble(), arr.get(1).getAsDouble(), arr.get(2).getAsDouble());
                 }
-                catch (Exception e)
+                catch (Exception ignore)
                 {
                 }
             }
@@ -441,7 +441,7 @@ public class JsonUtils
             }
             catch (Exception e)
             {
-                Servux.logger.error("Failed to parse the JSON file '{}'", fileName, e);
+                Servux.LOGGER.error("Failed to parse the JSON file '{}'", fileName, e);
             }
         }
 
@@ -451,9 +451,6 @@ public class JsonUtils
     /**
      * Converts the given JsonElement tree into its string representation.
      * If <b>compact</b> is true, then it's written in one line without spaces or line breaks.
-     * @param root
-     * @param compact
-     * @return
      */
     public static String jsonToString(JsonElement element, boolean compact)
     {
@@ -480,7 +477,7 @@ public class JsonUtils
         }
         catch (IOException e)
         {
-            Servux.logger.warn("Failed to write JSON data to file '{}'", file.getAbsolutePath(), e);
+            Servux.LOGGER.warn("Failed to write JSON data to file '{}'", file.getAbsolutePath(), e);
         }
         finally
         {
@@ -493,7 +490,7 @@ public class JsonUtils
             }
             catch (Exception e)
             {
-                Servux.logger.warn("Failed to close JSON file", e);
+                Servux.LOGGER.warn("Failed to close JSON file", e);
             }
         }
 
