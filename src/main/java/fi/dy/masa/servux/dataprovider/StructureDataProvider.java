@@ -1,4 +1,4 @@
-package fi.dy.masa.servux.dataproviders;
+package fi.dy.masa.servux.dataprovider;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -12,15 +12,15 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
-import fi.dy.masa.servux.network.IPluginChannelHandler;
+import fi.dy.masa.servux.network.ClientPacketHandler;
 import fi.dy.masa.servux.network.PacketSplitter;
 import fi.dy.masa.servux.network.packet.StructureDataPacketHandler;
-import fi.dy.masa.servux.util.PlayerDimensionPosition;
+import fi.dy.masa.servux.util.data.PlayerDimensionPosition;
 import fi.dy.masa.servux.util.PositionUtils;
-import fi.dy.masa.servux.util.Timeout;
+import fi.dy.masa.servux.util.data.Timeout;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
-public class StructureDataProvider extends DataProviderBase
+public class StructureDataProvider extends BaseDataProvider
 {
     public static final StructureDataProvider INSTANCE = new StructureDataProvider();
 
@@ -45,7 +45,7 @@ public class StructureDataProvider extends DataProviderBase
     }
 
     @Override
-    public IPluginChannelHandler getPacketHandler()
+    public ClientPacketHandler getPacketHandler()
     {
         return StructureDataPacketHandler.INSTANCE;
     }

@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.profiler.Profiler;
-import fi.dy.masa.servux.dataproviders.DataProviderManager;
+import fi.dy.masa.servux.dataprovider.DataProviderManager;
 
 @Mixin(MinecraftServer.class)
 public abstract class MixinMinecraftServer

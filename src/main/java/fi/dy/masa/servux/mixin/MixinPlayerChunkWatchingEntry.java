@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.PlayerChunkWatchingEntry;
 import net.minecraft.world.chunk.Chunk;
-import fi.dy.masa.servux.dataproviders.StructureDataProvider;
+import fi.dy.masa.servux.dataprovider.StructureDataProvider;
 
 @Mixin(PlayerChunkWatchingEntry.class)
 public abstract class MixinPlayerChunkWatchingEntry

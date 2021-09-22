@@ -1,36 +1,36 @@
-package fi.dy.masa.servux.dataproviders;
+package fi.dy.masa.servux.dataprovider;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.server.MinecraftServer;
-import fi.dy.masa.servux.network.IPluginChannelHandler;
-import fi.dy.masa.servux.network.ServerPacketChannelHandler;
+import fi.dy.masa.servux.network.ClientPacketHandler;
+import fi.dy.masa.servux.network.PacketChannelHandler;
 import fi.dy.masa.servux.util.JsonUtils;
 
 public class DataProviderManager
 {
     public static final DataProviderManager INSTANCE = new DataProviderManager();
 
-    protected final HashMap<String, IDataProvider> providers = new HashMap<>();
-    protected ImmutableList<IDataProvider> providersImmutable = ImmutableList.of();
-    protected ArrayList<IDataProvider> providersTicking = new ArrayList<>();
+    protected final HashMap<String, DataProvider> providers = new HashMap<>();
+    protected final List<DataProvider> providersTicking = new ArrayList<>();
+    protected ImmutableList<DataProvider> providersImmutable = ImmutableList.of();
 
-    public ImmutableList<IDataProvider> getAllProviders()
+    public ImmutableList<DataProvider> getAllProviders()
     {
         return this.providersImmutable;
     }
 
     /**
      * Registers the given data provider, if it's not already registered
-     * @param provider
      * @return true if the provider did not exist yet and was successfully registered
      */
-    public boolean registerDataProvider(IDataProvider provider)
+    public boolean registerDataProvider(DataProvider provider)
     {
         String name = provider.getName();
 
@@ -47,11 +47,11 @@ public class DataProviderManager
 
     public boolean setProviderEnabled(String providerName, boolean enabled)
     {
-        IDataProvider provider = this.providers.get(providerName);
+        DataProvider provider = this.providers.get(providerName);
         return provider != null && this.setProviderEnabled(provider, enabled);
     }
 
-    public boolean setProviderEnabled(IDataProvider provider, boolean enabled)
+    public boolean setProviderEnabled(DataProvider provider, boolean enabled)
     {
         boolean wasEnabled = provider.isEnabled();
         enabled = true; // FIXME TODO remove debug
@@ -62,9 +62,12 @@ public class DataProviderManager
             provider.setEnabled(enabled);
             this.updatePacketHandlerRegistration(provider);
 
-            if (enabled && provider.shouldTick() && this.providersTicking.contains(provider) == false)
+            if (enabled && provider.shouldTick())
             {
-                this.providersTicking.add(provider);
+                if (this.providersTicking.contains(provider) == false)
+                {
+                    this.providersTicking.add(provider);
+                }
             }
             else
             {
@@ -81,7 +84,7 @@ public class DataProviderManager
     {
         if (this.providersTicking.isEmpty() == false)
         {
-            for (IDataProvider provider : this.providersTicking)
+            for (DataProvider provider : this.providersTicking)
             {
                 if ((tickCounter % provider.getTickRate()) == 0)
                 {
@@ -93,23 +96,23 @@ public class DataProviderManager
 
     protected void registerEnabledPacketHandlers()
     {
-        for (IDataProvider provider : this.providersImmutable)
+        for (DataProvider provider : this.providersImmutable)
         {
             this.updatePacketHandlerRegistration(provider);
         }
     }
 
-    protected void updatePacketHandlerRegistration(IDataProvider provider)
+    protected void updatePacketHandlerRegistration(DataProvider provider)
     {
-        IPluginChannelHandler handler = provider.getPacketHandler();
+        ClientPacketHandler handler = provider.getPacketHandler();
 
         if (provider.isEnabled())
         {
-            ServerPacketChannelHandler.INSTANCE.registerServerChannelHandler(handler);
+            PacketChannelHandler.INSTANCE.registerServerChannelHandler(handler);
         }
         else
         {
-            ServerPacketChannelHandler.INSTANCE.unregisterServerChannelHandler(handler);
+            PacketChannelHandler.INSTANCE.unregisterServerChannelHandler(handler);
         }
     }
 
@@ -128,7 +131,7 @@ public class DataProviderManager
             }
         }
 
-        for (IDataProvider provider : this.providersImmutable)
+        for (DataProvider provider : this.providersImmutable)
         {
             String name = provider.getName();
             boolean enabled = obj != null && JsonUtils.getBooleanOrDefault(obj, name, false);
@@ -141,7 +144,7 @@ public class DataProviderManager
         JsonObject root = new JsonObject();
         JsonObject objToggles = new JsonObject();
 
-        for (IDataProvider provider : this.providersImmutable)
+        for (DataProvider provider : this.providersImmutable)
         {
             String name = provider.getName();
             objToggles.add(name, new JsonPrimitive(provider.isEnabled()));

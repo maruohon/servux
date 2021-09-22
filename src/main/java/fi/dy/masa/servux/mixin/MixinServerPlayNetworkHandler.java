@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
-import fi.dy.masa.servux.network.ServerPacketChannelHandler;
+import fi.dy.masa.servux.network.PacketChannelHandler;
 
 @Mixin(value = ServerPlayNetworkHandler.class, priority = 998)
 public abstract class MixinServerPlayNetworkHandler
@@ -14,6 +14,6 @@ public abstract class MixinServerPlayNetworkHandler
     @Inject(method = "onCustomPayload", at = @At("HEAD"))
     private void servux_handleCustomPayload(CustomPayloadC2SPacket packet, CallbackInfo ci)
     {
-        ServerPacketChannelHandler.INSTANCE.processPacketFromClient(packet, (ServerPlayNetworkHandler) (Object) this);
+        PacketChannelHandler.INSTANCE.processPacketFromClient(packet, (ServerPlayNetworkHandler) (Object) this);
     }
 }

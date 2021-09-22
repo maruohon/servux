@@ -2,10 +2,10 @@ package fi.dy.masa.servux.network.packet;
 
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.util.Identifier;
-import fi.dy.masa.servux.dataproviders.StructureDataProvider;
-import fi.dy.masa.servux.network.IPluginChannelHandler;
+import fi.dy.masa.servux.dataprovider.StructureDataProvider;
+import fi.dy.masa.servux.network.ClientPacketHandler;
 
-public class StructureDataPacketHandler implements IPluginChannelHandler
+public class StructureDataPacketHandler implements ClientPacketHandler
 {
     public static final Identifier CHANNEL = new Identifier("servux:structures");
     public static final StructureDataPacketHandler INSTANCE = new StructureDataPacketHandler();
@@ -27,14 +27,14 @@ public class StructureDataPacketHandler implements IPluginChannelHandler
     }
 
     @Override
-    public boolean subscribe(ServerPlayNetworkHandler netHandler)
+    public void subscribe(ServerPlayNetworkHandler netHandler)
     {
-        return StructureDataProvider.INSTANCE.register(netHandler.player);
+        StructureDataProvider.INSTANCE.register(netHandler.player);
     }
 
     @Override
-    public boolean unsubscribe(ServerPlayNetworkHandler netHandler)
+    public void unsubscribe(ServerPlayNetworkHandler netHandler)
     {
-        return StructureDataProvider.INSTANCE.unregister(netHandler.player);
+        StructureDataProvider.INSTANCE.unregister(netHandler.player);
     }
 }
