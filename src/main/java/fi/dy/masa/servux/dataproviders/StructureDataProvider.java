@@ -1,10 +1,8 @@
 package fi.dy.masa.servux.dataproviders;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -13,17 +11,13 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.WorldChunk;
 import fi.dy.masa.servux.network.IPluginChannelHandler;
 import fi.dy.masa.servux.network.PacketSplitter;
 import fi.dy.masa.servux.network.packet.StructureDataPacketHandler;
 import fi.dy.masa.servux.util.PlayerDimensionPosition;
+import fi.dy.masa.servux.util.PositionUtils;
 import fi.dy.masa.servux.util.Timeout;
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
 public class StructureDataProvider extends DataProviderBase
@@ -46,12 +40,8 @@ public class StructureDataProvider extends DataProviderBase
         this.metadata.putString("id", StructureDataPacketHandler.CHANNEL.toString());
         this.metadata.putInt("timeout", this.timeout);
         this.metadata.putInt("version", StructureDataPacketHandler.PROTOCOL_VERSION);
-    }
 
-    @Override
-    public boolean shouldTick()
-    {
-        return true;
+        //this.shouldTick = true;
     }
 
     @Override
@@ -92,13 +82,13 @@ public class StructureDataProvider extends DataProviderBase
         }
     }
 
-    public void onStartedWatchingChunk(ServerPlayerEntity player, WorldChunk chunk)
+    public void onStartedWatchingChunk(ServerPlayerEntity player, Chunk chunk)
     {
         UUID uuid = player.getUuid();
 
         if (this.registeredPlayers.containsKey(uuid))
         {
-            this.addChunkTimeoutIfHasReferences(uuid, chunk, player.getServer().getTicks());
+            this.addChunkTimeoutIfHasReferences(uuid, chunk, player.server.getTicks());
         }
     }
 
@@ -113,8 +103,8 @@ public class StructureDataProvider extends DataProviderBase
             PacketSplitter.sendPacketTypeAndCompound(StructureDataPacketHandler.CHANNEL, StructureDataPacketHandler.PACKET_S2C_METADATA, this.metadata, player);
 
             this.registeredPlayers.put(uuid, new PlayerDimensionPosition(player));
-            int tickCounter = player.getServer().getTicks();
-            this.initialSyncStructuresToPlayerWithinRange(player, player.getServer().getPlayerManager().getViewDistance(), tickCounter);
+            int tickCounter = player.server.getTicks();
+            this.initialSyncStructuresToPlayerWithinRange(player, player.server.getPlayerManager().getViewDistance(), tickCounter);
 
             registered = true;
         }
@@ -131,7 +121,7 @@ public class StructureDataProvider extends DataProviderBase
     protected void initialSyncStructuresToPlayerWithinRange(ServerPlayerEntity player, int chunkRadius, int tickCounter)
     {
         UUID uuid = player.getUuid();
-        ChunkPos center = player.getCameraPosition().toChunkPos();
+        ChunkPos center = PositionUtils.chunkPosFrom(player);
         Map<String, LongSet> references = this.getStructureReferencesWithinRange(player.getServerWorld(), center, chunkRadius);
 
         this.timeouts.remove(uuid);
@@ -141,10 +131,11 @@ public class StructureDataProvider extends DataProviderBase
         this.sendStructures(player, references, tickCounter);
     }
 
-    protected void addChunkTimeoutIfHasReferences(final UUID uuid, WorldChunk chunk, final int tickCounter)
+    protected void addChunkTimeoutIfHasReferences(final UUID uuid, Chunk chunk, final int tickCounter)
     {
-        final ChunkPos pos = chunk.getPos();
+        final ChunkPos pos = chunk.method_27417();
 
+        /*
         if (this.chunkHasStructureReferences(pos.x, pos.z, chunk.getWorld()))
         {
             final Map<ChunkPos, Timeout> map = this.timeouts.computeIfAbsent(uuid, (u) -> new HashMap<>());
@@ -154,6 +145,7 @@ public class StructureDataProvider extends DataProviderBase
             // Set the timeout so it's already expired and will cause the chunk to be sent on the next update tick
             map.computeIfAbsent(pos, (p) -> new Timeout(tickCounter - timeout));
         }
+        */
     }
 
     protected void checkForDimensionChange(ServerPlayerEntity player)
@@ -175,9 +167,9 @@ public class StructureDataProvider extends DataProviderBase
 
         for (LongSet chunks : references.values())
         {
-            for (Long chunkPosLong : chunks)
+            for (long chunkPosLong : chunks)
             {
-                final ChunkPos pos = new ChunkPos(chunkPosLong);
+                final ChunkPos pos = new ChunkPos((int) chunkPosLong, (int) (chunkPosLong >>> 32));
                 map.computeIfAbsent(pos, (p) -> new Timeout(tickCounter)).setLastSync(tickCounter);
             }
         }
@@ -205,6 +197,7 @@ public class StructureDataProvider extends DataProviderBase
 
     protected void sendAndRefreshExpiredStructures(ServerPlayerEntity player, Map<ChunkPos, Timeout> map, int tickCounter)
     {
+        /*
         Set<ChunkPos> positionsToUpdate = new HashSet<>();
 
         for (Map.Entry<ChunkPos, Timeout> entry : map.entrySet())
@@ -220,7 +213,7 @@ public class StructureDataProvider extends DataProviderBase
         if (positionsToUpdate.isEmpty() == false)
         {
             ServerWorld world = player.getServerWorld();
-            ChunkPos center = player.getCameraPosition().toChunkPos();
+            ChunkPos center = PositionUtils.chunkPosFrom(player);
             Map<String, LongSet> references = new HashMap<>();
 
             for (ChunkPos pos : positionsToUpdate)
@@ -249,102 +242,7 @@ public class StructureDataProvider extends DataProviderBase
                 this.sendStructures(player, references, tickCounter);
             }
         }
-    }
-
-    protected void getStructureReferencesFromChunk(int chunkX, int chunkZ, World world, Map<String, LongSet> references)
-    {
-        if (world.isChunkLoaded(chunkX, chunkZ) == false)
-        {
-            return;
-        }
-
-        Chunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.STRUCTURE_STARTS, false);
-
-        if (chunk == null)
-        {
-            return;
-        }
-
-        for (Map.Entry<String, LongSet> entry : chunk.getStructureReferences().entrySet())
-        {
-            String structureId = entry.getKey();
-            LongSet startChunks = entry.getValue();
-
-            // TODO add an option
-            if (startChunks.isEmpty() == false && structureId.equals("Mineshaft") == false)
-            {
-                references.merge(structureId, startChunks, (oldSet, entrySet) -> {
-                    LongOpenHashSet newSet = new LongOpenHashSet(oldSet);
-                    newSet.addAll(entrySet);
-                    return newSet;
-                });
-            }
-        }
-    }
-
-    protected boolean chunkHasStructureReferences(int chunkX, int chunkZ, World world)
-    {
-        if (world.isChunkLoaded(chunkX, chunkZ) == false)
-        {
-            return false;
-        }
-
-        Chunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.STRUCTURE_STARTS, false);
-
-        if (chunk == null)
-        {
-            return false;
-        }
-
-        for (Map.Entry<String, LongSet> entry : chunk.getStructureReferences().entrySet())
-        {
-            // TODO add an option
-            if (entry.getKey().equals("Mineshaft") == false && entry.getValue().isEmpty() == false)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    protected Map<ChunkPos, StructureStart> getStructureStartsFromReferences(ServerWorld world, Map<String, LongSet> references)
-    {
-        Map<ChunkPos, StructureStart> starts = new HashMap<>();
-
-        for (Map.Entry<String, LongSet> entry : references.entrySet())
-        {
-            String structureId = entry.getKey();
-            LongSet startChunks = entry.getValue();
-            LongIterator iter = startChunks.iterator();
-
-            while (iter.hasNext())
-            {
-                ChunkPos pos = new ChunkPos(iter.nextLong());
-
-                if (world.isChunkLoaded(pos.x, pos.z) == false)
-                {
-                    continue;
-                }
-
-                Chunk chunk = world.getChunk(pos.x, pos.z, ChunkStatus.STRUCTURE_STARTS, false);
-
-                if (chunk == null)
-                {
-                    continue;
-                }
-
-                StructureStart start = chunk.getStructureStart(structureId);
-
-                if (start != null)
-                {
-                    starts.put(pos, start);
-                }
-            }
-        }
-
-        // System.out.printf("getStructureStartsFromReferences: references: %d -> starts: %d\n", references.size(), starts.size());
-        return starts;
+        */
     }
 
     protected Map<String, LongSet> getStructureReferencesWithinRange(ServerWorld world, ChunkPos center, int chunkRadius)
@@ -355,7 +253,7 @@ public class StructureDataProvider extends DataProviderBase
         {
             for (int cz = center.z - chunkRadius; cz <= center.z + chunkRadius; ++cz)
             {
-                this.getStructureReferencesFromChunk(cx, cz, world, references);
+                //this.getStructureReferencesFromChunk(cx, cz, world, references);
             }
         }
 
@@ -365,6 +263,7 @@ public class StructureDataProvider extends DataProviderBase
 
     protected void sendStructures(ServerPlayerEntity player, Map<String, LongSet> references, int tickCounter)
     {
+        /*
         Map<ChunkPos, StructureStart> starts = this.getStructureStartsFromReferences(player.getServerWorld(), references);
 
         if (starts.isEmpty() == false)
@@ -379,6 +278,7 @@ public class StructureDataProvider extends DataProviderBase
 
             PacketSplitter.sendPacketTypeAndCompound(StructureDataPacketHandler.CHANNEL, StructureDataPacketHandler.PACKET_S2C_STRUCTURE_DATA, tag, player);
         }
+        */
     }
 
 
@@ -389,7 +289,7 @@ public class StructureDataProvider extends DataProviderBase
         for (Map.Entry<ChunkPos, StructureStart> entry : structures.entrySet())
         {
             ChunkPos pos = entry.getKey();
-            list.add(entry.getValue().toTag(pos.x,  pos.z));
+            list.add(entry.getValue().method_27890(pos.x,  pos.z)); // toTag
         }
 
         return list;

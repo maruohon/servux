@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 import fi.dy.masa.servux.dataproviders.DataProviderManager;
 import fi.dy.masa.servux.dataproviders.StructureDataProvider;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 
 public class Servux implements ModInitializer
 {
@@ -19,7 +21,7 @@ public class Servux implements ModInitializer
 
     public static String getModVersionString(String modId)
     {
-        for (net.fabricmc.loader.api.ModContainer container : net.fabricmc.loader.api.FabricLoader.getInstance().getAllMods())
+        for (ModContainer container : FabricLoader.getInstance().getAllMods())
         {
             if (container.getMetadata().getId().equals(modId))
             {

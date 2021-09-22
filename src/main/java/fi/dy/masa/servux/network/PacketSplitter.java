@@ -25,11 +25,11 @@ public class PacketSplitter
     public static final int MAX_PAYLOAD_PER_PACKET_S2C = MAX_TOTAL_PER_PACKET_S2C - 5;
     public static final int DEFAULT_MAX_RECEIVE_SIZE_C2S = 1048576;
 
-    private static final Map<Pair<PacketListener, Identifier>, ReadingSession> READING_SESSIONS = new HashMap<>();
+    private static final Map<Pair<PacketListener, String>, ReadingSession> READING_SESSIONS = new HashMap<>();
 
     public static void send(PacketByteBuf packet, Identifier channel, ServerPlayNetworkHandler networkHandler)
     {
-        send(packet, MAX_PAYLOAD_PER_PACKET_S2C, buf -> networkHandler.sendPacket(new CustomPayloadS2CPacket(channel, buf)));
+        send(packet, MAX_PAYLOAD_PER_PACKET_S2C, buf -> networkHandler.sendPacket(new CustomPayloadS2CPacket(channel.toString(), buf)));
     }
 
     private static void send(PacketByteBuf packet, int payloadLimit, Consumer<PacketByteBuf> sender)
@@ -56,15 +56,15 @@ public class PacketSplitter
     }
 
     @Nullable
-    public static PacketByteBuf receive(Identifier channel, PacketByteBuf data, ServerPlayNetworkHandler networkHandler)
+    public static PacketByteBuf receive(String channel, PacketByteBuf data, ServerPlayNetworkHandler networkHandler)
     {
         return receive(channel, data, DEFAULT_MAX_RECEIVE_SIZE_C2S, networkHandler);
     }
 
     @Nullable
-    private static PacketByteBuf receive(Identifier channel, PacketByteBuf data, int maxLength, ServerPlayNetworkHandler networkHandler)
+    private static PacketByteBuf receive(String channel, PacketByteBuf data, int maxLength, ServerPlayNetworkHandler networkHandler)
     {
-        Pair<PacketListener, Identifier> key = Pair.of(networkHandler, channel);
+        Pair<PacketListener, String> key = Pair.of(networkHandler, channel);
         return READING_SESSIONS.computeIfAbsent(key, ReadingSession::new).receive(data, maxLength);
     }
 
@@ -90,11 +90,11 @@ public class PacketSplitter
 
     private static class ReadingSession
     {
-        private final Pair<PacketListener, Identifier> key;
+        private final Pair<PacketListener, String> key;
         private int expectedSize = -1;
         private PacketByteBuf received;
 
-        private ReadingSession(Pair<PacketListener, Identifier> key)
+        private ReadingSession(Pair<PacketListener, String> key)
         {
             this.key = key;
         }

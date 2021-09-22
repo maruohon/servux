@@ -6,8 +6,8 @@
     "mixins": [
         "IMixinCustomPayloadC2SPacket",
         "MixinMinecraftServer",
-        "MixinServerPlayNetworkHandler",
-        "MixinThreadedAnvilChunkStorage"
+        "MixinPlayerChunkWatchingEntry",
+        "MixinServerPlayNetworkHandler"
     ],
     "injectors": {
         "defaultRequire": 1

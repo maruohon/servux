@@ -9,6 +9,7 @@ public abstract class DataProviderBase implements IDataProvider
     protected final String description;
     protected final int protocolVersion;
     protected boolean enabled;
+    protected boolean shouldTick;
     private int tickRate = 40;
 
     protected DataProviderBase(String name, Identifier channel, int protocolVersion, String description)
@@ -47,6 +48,12 @@ public abstract class DataProviderBase implements IDataProvider
     public boolean isEnabled()
     {
         return this.enabled;
+    }
+
+    @Override
+    public boolean shouldTick()
+    {
+        return this.shouldTick;
     }
 
     @Override
