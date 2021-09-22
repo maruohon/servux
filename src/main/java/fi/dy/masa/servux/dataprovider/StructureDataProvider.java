@@ -28,13 +28,12 @@ public class StructureDataProvider extends BaseDataProvider
     protected final Map<UUID, Map<ChunkPos, Timeout>> timeouts = new HashMap<>();
     protected final CompoundTag metadata = new CompoundTag();
     protected int timeout = 30 * 20;
-    protected int updateInterval = 40;
     protected int retainDistance;
 
     protected StructureDataProvider()
     {
         super("structure_bounding_boxes",
-              StructureDataPacketHandler.CHANNEL, StructureDataPacketHandler.PROTOCOL_VERSION,
+              StructureDataPacketHandler.PROTOCOL_VERSION,
               "Structure Bounding Boxes data for structures such as Witch Huts, Ocean Monuments, Nether Fortresses etc.");
 
         this.metadata.putString("id", StructureDataPacketHandler.CHANNEL.toString());
@@ -53,30 +52,27 @@ public class StructureDataProvider extends BaseDataProvider
     @Override
     public void tick(MinecraftServer server, int tickCounter)
     {
-        if ((tickCounter % this.updateInterval) == 0)
+        if (this.registeredPlayers.isEmpty() == false)
         {
-            if (this.registeredPlayers.isEmpty() == false)
+            // System.out.printf("=======================\n");
+            // System.out.printf("tick: %d - %s\n", tickCounter, this.isEnabled());
+            this.retainDistance = server.getPlayerManager().getViewDistance() + 2;
+            Iterator<UUID> uuidIter = this.registeredPlayers.keySet().iterator();
+
+            while (uuidIter.hasNext())
             {
-                // System.out.printf("=======================\n");
-                // System.out.printf("tick: %d - %s\n", tickCounter, this.isEnabled());
-                this.retainDistance = server.getPlayerManager().getViewDistance() + 2;
-                Iterator<UUID> uuidIter = this.registeredPlayers.keySet().iterator();
+                UUID uuid = uuidIter.next();
+                ServerPlayerEntity player = server.getPlayerManager().getPlayer(uuid);
 
-                while (uuidIter.hasNext())
+                if (player != null)
                 {
-                    UUID uuid = uuidIter.next();
-                    ServerPlayerEntity player = server.getPlayerManager().getPlayer(uuid);
-
-                    if (player != null)
-                    {
-                        this.checkForDimensionChange(player);
-                        this.refreshTrackedChunks(player, tickCounter);
-                    }
-                    else
-                    {
-                        this.timeouts.remove(uuid);
-                        uuidIter.remove();
-                    }
+                    this.checkForDimensionChange(player);
+                    this.refreshTrackedChunks(player, tickCounter);
+                }
+                else
+                {
+                    this.timeouts.remove(uuid);
+                    uuidIter.remove();
                 }
             }
         }

@@ -1,7 +1,6 @@
 package fi.dy.masa.servux.dataprovider;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Identifier;
 import fi.dy.masa.servux.network.ClientPacketHandler;
 
 public interface DataProvider
@@ -20,12 +19,6 @@ public interface DataProvider
      *         the available providers and to check the status of a given provider.
      */
     String getDescription();
-
-    /**
-     * @return the network channel name used by this data provider to listen
-     *         for incoming data requests.
-     */
-    Identifier getNetworkChannel();
 
     /**
      * @return the current protocol version this provider supports

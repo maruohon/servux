@@ -21,12 +21,6 @@ public class StructureDataPacketHandler implements ClientPacketHandler
     }
 
     @Override
-    public boolean isSubscribable()
-    {
-        return true;
-    }
-
-    @Override
     public void subscribe(ServerPlayNetworkHandler netHandler)
     {
         StructureDataProvider.INSTANCE.register(netHandler.player);

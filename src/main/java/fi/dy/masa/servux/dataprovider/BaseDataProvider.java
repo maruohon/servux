@@ -1,10 +1,7 @@
 package fi.dy.masa.servux.dataprovider;
 
-import net.minecraft.util.Identifier;
-
 public abstract class BaseDataProvider implements DataProvider
 {
-    protected final Identifier networkChannel;
     protected final String name;
     protected final String description;
     protected final int protocolVersion;
@@ -12,10 +9,9 @@ public abstract class BaseDataProvider implements DataProvider
     protected boolean shouldTick;
     private int tickRate = 40;
 
-    protected BaseDataProvider(String name, Identifier channel, int protocolVersion, String description)
+    protected BaseDataProvider(String name, int protocolVersion, String description)
     {
         this.name = name;
-        this.networkChannel = channel;
         this.protocolVersion = protocolVersion;
         this.description = description;
     }
@@ -30,12 +26,6 @@ public abstract class BaseDataProvider implements DataProvider
     public String getDescription()
     {
         return this.description;
-    }
-
-    @Override
-    public Identifier getNetworkChannel()
-    {
-        return this.networkChannel;
     }
 
     @Override
