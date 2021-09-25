@@ -34,10 +34,6 @@ configFile.withReader {
 	project.ext.config = new ConfigSlurper().parse prop
 }
 
-archivesBaseName = project.archives_base_name
-version = project.mod_version
-group = project.maven_group
-
 repositories {
 	maven {
 		name = 'legacy-fabric'
@@ -52,12 +48,12 @@ repositories {
 
 dependencies {
 	implementation "com.google.guava:guava:23.5-jre"
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings_version}:v2"
-	modApi "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
+	minecraft "com.mojang:minecraft:${config.minecraft_version}"
+	mappings "net.fabricmc:yarn:${config.yarn_mappings_version}:v2"
+	modApi "net.fabricmc:fabric-loader:${config.fabric_loader_version}"
 	compile "com.google.code.findbugs:jsr305:3+"
 	//modImplementation "net.legacyfabric.legacy-fabric-api:legacy-fabric-api:${fabric_api_version}"
-	//modImplementation("com.github.shedaniel:fabric-loader:${project.loader_version}")
+	//modImplementation("com.github.shedaniel:fabric-loader:${config.loader_version}")
 }
 
 minecraft {
@@ -84,6 +80,12 @@ archivesBaseName = config.mod_file_name + '-' + config.minecraft_version_out
 version = project.minecraft.mod_version
 
 processResources {
+	inputs.property "mod_version", project.minecraft.mod_version
+
+	filesMatching("fabric.mod.json") {
+		expand "mod_version": project.minecraft.mod_version
+	}
+	/*
 	inputs.property "version", project.version
 
 	from(sourceSets.main.resources.srcDirs) {
@@ -94,6 +96,7 @@ processResources {
 	from(sourceSets.main.resources.srcDirs) {
 		exclude "fabric.mod.json"
 	}
+	*/
 }
 
 // ensure that the encoding is set to UTF-8, no matter what the system default is
