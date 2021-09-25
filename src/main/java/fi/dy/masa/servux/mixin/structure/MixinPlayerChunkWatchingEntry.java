@@ -1,4 +1,4 @@
-package fi.dy.masa.servux.mixin;
+package fi.dy.masa.servux.mixin.structure;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,7 +18,7 @@ public abstract class MixinPlayerChunkWatchingEntry
     @Inject(method = "add",
             at = @At(value = "INVOKE", remap = false,
                      target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
-    private void servux_onSendChunkPacket(ServerPlayerEntity player, CallbackInfo ci)
+    private void servux_onAdd(ServerPlayerEntity player, CallbackInfo ci)
     {
         if (StructureDataProvider.INSTANCE.isEnabled())
         {

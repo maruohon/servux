@@ -12,7 +12,7 @@ import fi.dy.masa.servux.network.PacketChannelHandler;
 public abstract class MixinServerPlayNetworkHandler
 {
     @Inject(method = "onCustomPayload", at = @At("HEAD"))
-    private void servux_handleCustomPayload(CustomPayloadC2SPacket packet, CallbackInfo ci)
+    private void servux_onCustomPayload(CustomPayloadC2SPacket packet, CallbackInfo ci)
     {
         PacketChannelHandler.INSTANCE.processPacketFromClient(packet, (ServerPlayNetworkHandler) (Object) this);
     }

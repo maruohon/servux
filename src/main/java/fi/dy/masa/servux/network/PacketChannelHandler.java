@@ -31,7 +31,7 @@ public class PacketChannelHandler
             {
                 this.handlers.put(channel, handler);
 
-                if (handler.isSubscribable())
+                if (handler.canSubscribe())
                 {
                     this.subscribableHandlers.put(channel, handler);
                 }

@@ -7,10 +7,10 @@ import fi.dy.masa.servux.network.ClientPacketHandler;
 
 public class StructureDataPacketHandler implements ClientPacketHandler
 {
-    public static final Identifier CHANNEL = new Identifier("servux:structures");
+    public static final Identifier CHANNEL = new Identifier("servux:structure");
     public static final StructureDataPacketHandler INSTANCE = new StructureDataPacketHandler();
 
-    public static final int PROTOCOL_VERSION = 1;
+    public static final int PROTOCOL_VERSION = 2;
     public static final int PACKET_S2C_METADATA = 1;
     public static final int PACKET_S2C_STRUCTURE_DATA = 2;
 
@@ -18,6 +18,12 @@ public class StructureDataPacketHandler implements ClientPacketHandler
     public Identifier getChannel()
     {
         return CHANNEL;
+    }
+
+    @Override
+    public boolean canSubscribe()
+    {
+        return true;
     }
 
     @Override

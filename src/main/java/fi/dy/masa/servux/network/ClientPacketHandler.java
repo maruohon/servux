@@ -8,9 +8,9 @@ public interface ClientPacketHandler
 {
     Identifier getChannel();
 
-    default boolean isSubscribable()
+    default boolean canSubscribe()
     {
-        return true;
+        return false;
     }
 
     default void onPacketReceived(PacketByteBuf buf, ServerPlayNetworkHandler netHandler)
