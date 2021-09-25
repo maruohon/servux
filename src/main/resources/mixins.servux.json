@@ -7,6 +7,7 @@
         "IMixinCustomPayloadC2SPacket",
         "MixinMinecraftServer",
         "MixinServerPlayNetworkHandler",
+        "infosub.IMixinServerWorld",
         "structure.IMixinEndChunkGenerator",
         "structure.IMixinFlatChunkGenerator",
         "structure.IMixinNetherChunkGenerator",
