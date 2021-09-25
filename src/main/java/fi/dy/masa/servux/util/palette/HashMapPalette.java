@@ -46,7 +46,13 @@ public class HashMapPalette<T> implements Palette<T>
     }
 
     @Override
-    public int idFor(T value)
+    public int getIdFor(T value)
+    {
+        return this.valueToIdMap.getInt(value);
+    }
+
+    @Override
+    public int getOrAddIdFor(T value)
     {
         int id = this.valueToIdMap.getInt(value);
 

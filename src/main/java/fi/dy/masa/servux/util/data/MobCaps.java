@@ -1,13 +1,13 @@
 package fi.dy.masa.servux.util.data;
 
-import java.util.HashSet;
-import java.util.Set;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.world.PlayerChunkWatchingEntry;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.border.WorldBorder;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
 public class MobCaps
 {
@@ -35,46 +35,51 @@ public class MobCaps
 
         for (SpawnGroup group : ENTITY_CATEGORIES)
         {
-            LimitedValue val = this.getMobCap(group);
             int value = world.method_26030(group.getType());
             int limit = group.getCapacity() * spawnableChunks / divisor;
-            val.setBoth(value, limit);
+            this.getMobCap(group).setBoth(value, limit);
         }
     }
 
     public static int getSpawnableChunksCount(ServerWorld world)
     {
-        Set<ChunkPos> eligibleChunksForSpawning = new HashSet<>();
+        LongOpenHashSet eligibleChunksForSpawning = new LongOpenHashSet();
         int chunkCount = 0;
 
         for (PlayerEntity player : world.playerList)
         {
-            if (player.isSpectator() == false)
+            if (player.isSpectator())
             {
-                int cx = MathHelper.floor(player.x / 16.0D);
-                int cz = MathHelper.floor(player.z / 16.0D);
-                int chunkRadius = 8;
+                continue;
+            }
 
-                for (int cxOff = -chunkRadius; cxOff <= chunkRadius; ++cxOff)
+            int centerX = MathHelper.floor(player.x / 16.0D);
+            int centerZ = MathHelper.floor(player.z / 16.0D);
+            int chunkRadius = 8;
+
+            for (int cxOff = -chunkRadius; cxOff <= chunkRadius; ++cxOff)
+            {
+                for (int czOff = -chunkRadius; czOff <= chunkRadius; ++czOff)
                 {
-                    for (int czOff = -chunkRadius; czOff <= chunkRadius; ++czOff)
+                    boolean edgeChunk = cxOff == -chunkRadius || cxOff == chunkRadius || czOff == -chunkRadius || czOff == chunkRadius;
+                    int cx = centerX + cxOff;
+                    int cz = centerZ + czOff;
+                    long cpLong = ChunkPos.toLong(cx, cz);
+
+                    if (eligibleChunksForSpawning.contains(cpLong))
                     {
-                        boolean edgeChunk = cxOff == -chunkRadius || cxOff == chunkRadius || czOff == -chunkRadius || czOff == chunkRadius;
-                        ChunkPos chunkPos = new ChunkPos(cxOff + cx, czOff + cz);
+                        continue;
+                    }
 
-                        if (eligibleChunksForSpawning.contains(chunkPos) == false)
+                    ++chunkCount;
+
+                    if (edgeChunk == false && worldBorderIntersectsChunk(cx, cz, world.getWorldBorder()))
+                    {
+                        PlayerChunkWatchingEntry entry = world.getRaidManager().getEntry(cx, cz);
+
+                        if (entry != null && entry.isSynced())
                         {
-                            ++chunkCount;
-
-                            if (edgeChunk == false && world.getWorldBorder().method_27301(chunkPos))
-                            {
-                                PlayerChunkWatchingEntry entry = world.getRaidManager().getEntry(chunkPos.x, chunkPos.z);
-
-                                if (entry != null && entry.isSynced())
-                                {
-                                    eligibleChunksForSpawning.add(chunkPos);
-                                }
-                            }
+                            eligibleChunksForSpawning.add(cpLong);
                         }
                     }
                 }
@@ -82,5 +87,16 @@ public class MobCaps
         }
 
         return chunkCount;
+    }
+
+    protected static boolean worldBorderIntersectsChunk(int cx, int cz, WorldBorder border)
+    {
+        int startX = (cx << 4);
+        int startZ = (cz << 4);
+
+        return startX + 15 > border.method_27306() &&
+               startX      < border.method_27314() &&
+               startZ + 15 > border.method_27310() &&
+               startZ      < border.method_27315();
     }
 }

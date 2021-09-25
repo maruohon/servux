@@ -1,9 +1,8 @@
 package fi.dy.masa.servux.dataprovider;
 
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -31,19 +30,28 @@ import fi.dy.masa.servux.util.data.TpsData;
 import fi.dy.masa.servux.util.palette.HashMapPalette;
 import fi.dy.masa.servux.util.palette.Palette;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
 public class InfoSubDataProvider extends BaseDataProvider
 {
     public static final InfoSubDataProvider INSTANCE = new InfoSubDataProvider();
 
-    protected final ListMultimap<UUID, String> registeredChannels = ArrayListMultimap.create();
-    protected final Map<String, BiConsumer<PacketByteBuf, ServerPlayerEntity>> dataWriters = new HashMap<>();
+    protected final ListMultimap<UUID, Integer> registeredChannels = ArrayListMultimap.create();
+    protected final Int2ObjectOpenHashMap<BiConsumer<PacketByteBuf, ServerPlayerEntity>> dataWriters = new Int2ObjectOpenHashMap<>();
 
     protected final Int2ObjectOpenHashMap<MobCaps> mobCapsPerDimension = new Int2ObjectOpenHashMap<>();
     protected final Int2ObjectOpenHashMap<PerDimensionObjectCounts> perDimensionCounts = new Int2ObjectOpenHashMap<>();
     protected final TpsData tpsData = new TpsData();
-
     protected HashMapPalette<String> channelIdPalette = new HashMapPalette<>(7, this::resizePalette);
+
+    protected final IntOpenHashSet countChannels = new IntOpenHashSet();
+    protected final IntOpenHashSet mobCapChannels = new IntOpenHashSet();
+    protected final IntOpenHashSet tpsChannels = new IntOpenHashSet();
+    protected boolean hasAnySubscribers;
+    protected boolean hasCountSubscribers;
+    protected boolean hasMobCapSubscribers;
+    protected boolean hasTpsSubscribers;
+    protected boolean needsSubscriberCheck;
 
     protected InfoSubDataProvider()
     {
@@ -65,36 +73,68 @@ public class InfoSubDataProvider extends BaseDataProvider
     @Override
     public void tick(MinecraftServer server, int tickCounter)
     {
-        this.tpsData.update(server);
+        this.updateSubscriberCaches();
+
+        if (this.hasAnySubscribers)
+        {
+            this.updateData(server);
+            this.sendUpdatePackets(server);
+        }
+    }
+
+    protected void updateData(MinecraftServer server)
+    {
+        if (this.hasTpsSubscribers)
+        {
+            this.tpsData.update(server);
+        }
 
         for (ServerWorld world : server.worlds)
         {
-            int dim = WorldUtils.getDimensionId(world);
-
             try
             {
-                this.perDimensionCounts.get(dim).update(world);
-                this.mobCapsPerDimension.get(dim).update(world);
+                int dim = WorldUtils.getDimensionId(world);
+
+                if (this.hasCountSubscribers)
+                {
+                    this.perDimensionCounts.get(dim).update(world);
+                }
+
+                if (this.hasMobCapSubscribers)
+                {
+                    this.mobCapsPerDimension.get(dim).update(world);
+                }
             }
             catch (Exception ignore) {}
         }
-
-        this.sendUpdatePackets(server);
     }
 
     public void register(String channel, ServerPlayNetworkHandler netHandler)
     {
-        this.registeredChannels.put(netHandler.player.getUuid(), channel);
+        int id = this.channelIdPalette.getIdFor(channel);
+
+        if (id >= 0)
+        {
+            this.registeredChannels.put(netHandler.player.getUuid(), id);
+            this.setNeedsSubscriberCheck();
+        }
     }
 
     public void unregister(String channel, ServerPlayNetworkHandler netHandler)
     {
-        this.registeredChannels.remove(netHandler.player.getUuid(), channel);
+        int id = this.channelIdPalette.getIdFor(channel);
+
+        if (id >= 0)
+        {
+            this.registeredChannels.remove(netHandler.player.getUuid(), id);
+            this.setNeedsSubscriberCheck();
+        }
     }
 
     public void unregisterAllChannels(ServerPlayNetworkHandler netHandler)
     {
         this.registeredChannels.removeAll(netHandler.player.getUuid());
+        this.setNeedsSubscriberCheck();
     }
 
     public void sendMetadata(ServerPlayNetworkHandler netHandler)
@@ -107,6 +147,36 @@ public class InfoSubDataProvider extends BaseDataProvider
         PacketSplitter.sendPacketTypeAndCompound(InfoSubPacketHandler.REG_CHANNEL,
                                                  InfoSubPacketHandler.PACKET_S2C_METADATA,
                                                  tag, netHandler);
+    }
+
+    protected void setNeedsSubscriberCheck()
+    {
+        this.needsSubscriberCheck = true;
+    }
+
+    protected void updateSubscriberCaches()
+    {
+        if (this.needsSubscriberCheck)
+        {
+            this.hasCountSubscribers = this.containsAny(this.countChannels, this.registeredChannels.values());
+            this.hasMobCapSubscribers = this.containsAny(this.mobCapChannels, this.registeredChannels.values());
+            this.hasTpsSubscribers = this.containsAny(this.tpsChannels, this.registeredChannels.values());
+            this.hasAnySubscribers = this.registeredChannels.isEmpty() == false;
+            this.needsSubscriberCheck = false;
+        }
+    }
+
+    protected boolean containsAny(IntOpenHashSet haystack, Collection<Integer> needles)
+    {
+        for (int value : needles)
+        {
+            if (haystack.contains(value))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected void sendUpdatePackets(MinecraftServer server)
@@ -126,27 +196,26 @@ public class InfoSubDataProvider extends BaseDataProvider
         }
     }
 
-    protected void sendUpdateToPlayer(ServerPlayerEntity player, List<String> channels)
+    protected void sendUpdateToPlayer(ServerPlayerEntity player, List<Integer> channelIds)
     {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-        buf.writeVarInt(channels.size());
+        buf.writeVarInt(channelIds.size());
 
-        for (String channel : channels)
+        for (int channelId : channelIds)
         {
-            this.addDataForChannel(channel, buf, player);
+            this.addDataForChannel(channelId, buf, player);
         }
 
         PacketSplitter.send(buf, InfoSubPacketHandler.DATA_CHANNEL, player.networkHandler);
     }
 
-    protected void addDataForChannel(String channel, PacketByteBuf buf, ServerPlayerEntity player)
+    protected void addDataForChannel(int channelId, PacketByteBuf buf, ServerPlayerEntity player)
     {
-        BiConsumer<PacketByteBuf, ServerPlayerEntity> dataWriter = this.dataWriters.get(channel);
-        int id = this.channelIdPalette.idFor(channel);
+        BiConsumer<PacketByteBuf, ServerPlayerEntity> dataWriter = this.dataWriters.get(channelId);
 
-        buf.writeVarInt(id);
+        buf.writeVarInt(channelId);
 
-        if (dataWriter != null && id >= 0)
+        if (dataWriter != null && channelId >= 0)
         {
             try
             {
@@ -190,13 +259,13 @@ public class InfoSubDataProvider extends BaseDataProvider
 
     protected void initializeTpsData()
     {
-        String channel = "minecraft.status.performance.tps";
-        this.channelIdPalette.idFor(channel);
-        this.dataWriters.put(channel, (buf, p) -> buf.writeFloat(this.tpsData.getServerTps()));
+        int id = this.channelIdPalette.getOrAddIdFor("minecraft.status.performance.tps");
+        this.dataWriters.put(id, (buf, p) -> buf.writeFloat(this.tpsData.getServerTps()));
+        this.tpsChannels.add(id);
 
-        channel = "minecraft.status.performance.mspt";
-        this.channelIdPalette.idFor(channel);
-        this.dataWriters.put(channel, (buf, p) -> buf.writeFloat(this.tpsData.getServerMspt()));
+        id = this.channelIdPalette.getOrAddIdFor("minecraft.status.performance.mspt");
+        this.dataWriters.put(id, (buf, p) -> buf.writeFloat(this.tpsData.getServerMspt()));
+        this.tpsChannels.add(id);
     }
 
     protected void initializeMobCapsForDimension(@Nullable Integer dimension)
@@ -211,12 +280,14 @@ public class InfoSubDataProvider extends BaseDataProvider
             String groupName = group.name().toLowerCase(Locale.ROOT);
 
             String channel = buildChannelName(String.format("minecraft.status.count.mobcap.%s.val", groupName), dimension);
-            this.channelIdPalette.idFor(channel);
-            this.dataWriters.put(channel, (buf, p) -> buf.writeVarInt(this.mobCapsPerDimension.get(getActiveDimension(p, dimension)).getMobCap(group).getValue()));
+            int id = this.channelIdPalette.getOrAddIdFor(channel);
+            this.dataWriters.put(id, (buf, p) -> buf.writeVarInt(this.mobCapsPerDimension.get(getActiveDimension(p, dimension)).getMobCap(group).getValue()));
+            this.mobCapChannels.add(id);
 
             channel = buildChannelName(String.format("minecraft.status.count.mobcap.%s.max", groupName), dimension);
-            this.channelIdPalette.idFor(channel);
-            this.dataWriters.put(channel, (buf, p) -> buf.writeVarInt(this.mobCapsPerDimension.get(getActiveDimension(p, dimension)).getMobCap(group).getLimit()));
+            id = this.channelIdPalette.getOrAddIdFor(channel);
+            this.dataWriters.put(id, (buf, p) -> buf.writeVarInt(this.mobCapsPerDimension.get(getActiveDimension(p, dimension)).getMobCap(group).getLimit()));
+            this.mobCapChannels.add(id);
         }
     }
 
@@ -238,8 +309,9 @@ public class InfoSubDataProvider extends BaseDataProvider
     protected void initializeCountForDimension(String channel, @Nullable Integer dimension, Function<PerDimensionObjectCounts, Integer> func)
     {
         channel = buildChannelName(channel, dimension);
-        this.channelIdPalette.idFor(channel);
-        this.dataWriters.put(channel, (buf, p) -> buf.writeVarInt(func.apply(this.perDimensionCounts.get(getActiveDimension(p, dimension)))));
+        int id = this.channelIdPalette.getOrAddIdFor(channel);
+        this.dataWriters.put(id, (buf, p) -> buf.writeVarInt(func.apply(this.perDimensionCounts.get(getActiveDimension(p, dimension)))));
+        this.countChannels.add(id);
     }
 
     public static String buildChannelName(String base, @Nullable Integer dimension)
@@ -262,6 +334,6 @@ public class InfoSubDataProvider extends BaseDataProvider
         HashMapPalette<String> newPalette = new HashMapPalette<>(bitsIn, this::resizePalette);
         newPalette.setMapping(oldPalette.getMapping());
         this.channelIdPalette = newPalette;
-        return newPalette.idFor(valueBeingAdded);
+        return newPalette.getOrAddIdFor(valueBeingAdded);
     }
 }

@@ -164,7 +164,7 @@ public class StructureDataProvider extends BaseDataProvider
         this.sendStructuresToPlayer(list, player);
         this.movedPlayers.remove(uuid);
 
-        System.out.printf("syncStructuresToPlayerWithinRange() - size: %d\n", list.size());
+        //System.out.printf("syncStructuresToPlayerWithinRange() - size: %d\n", list.size());
     }
 
     protected boolean checkForDimensionChange(ServerPlayerEntity player)

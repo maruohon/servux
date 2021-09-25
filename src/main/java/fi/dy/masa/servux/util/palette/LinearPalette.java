@@ -42,7 +42,24 @@ public class LinearPalette<T> implements Palette<T>
     }
 
     @Override
-    public int idFor(T value)
+    public int getIdFor(T value)
+    {
+        final int currentSize = this.currentSize;
+        T[] values = this.values;
+
+        for (int i = 0; i < currentSize; ++i)
+        {
+            if (values[i] == value)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    @Override
+    public int getOrAddIdFor(T value)
     {
         final int currentSize = this.currentSize;
         T[] values = this.values;

@@ -16,10 +16,15 @@ public interface Palette<T>
     int getMaxSize();
 
     /**
+     * @return the palette ID for the given value if it exists, otherwise -1
+     */
+    int getIdFor(T value);
+
+    /**
      * @return the palette ID for the given value (and add
      *         the value to the palette if it doesn't exist there yet)
      */
-    int idFor(T value);
+    int getOrAddIdFor(T value);
 
     /**
      * @return the value corresponding to the given palette ID, if the ID exists in the palette
