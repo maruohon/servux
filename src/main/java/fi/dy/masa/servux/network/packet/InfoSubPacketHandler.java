@@ -18,7 +18,6 @@ public class InfoSubPacketHandler implements ClientPacketHandler
 
     public static final int PROTOCOL_VERSION = 1;
     public static final int PACKET_S2C_METADATA = 1;
-    public static final int PACKET_S2C_DATA = 2;
 
     @Override
     public Identifier getChannel()
@@ -34,7 +33,7 @@ public class InfoSubPacketHandler implements ClientPacketHandler
 
         if (action.equals("unregister_all"))
         {
-            InfoSubDataProvider.INSTANCE.unregisterAllChannels(netHandler);
+            InfoSubDataProvider.INSTANCE.unregisterAllChannels(netHandler.player.getUuid());
         }
         else
         {

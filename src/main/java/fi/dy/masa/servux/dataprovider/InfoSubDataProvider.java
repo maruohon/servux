@@ -131,9 +131,9 @@ public class InfoSubDataProvider extends BaseDataProvider
         }
     }
 
-    public void unregisterAllChannels(ServerPlayNetworkHandler netHandler)
+    public void unregisterAllChannels(UUID uuid)
     {
-        this.registeredChannels.removeAll(netHandler.player.getUuid());
+        this.registeredChannels.removeAll(uuid);
         this.setNeedsSubscriberCheck();
     }
 
@@ -191,7 +191,7 @@ public class InfoSubDataProvider extends BaseDataProvider
             }
             else
             {
-                this.registeredChannels.removeAll(uuid);
+                this.unregisterAllChannels(uuid);
             }
         }
     }
