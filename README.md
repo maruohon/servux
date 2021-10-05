@@ -1,4 +1,4 @@
-Litematica
+Servux
 ==============
 Litematica is a client-side Minecraft mod using LiteLoader.
 It is more or less a re-creation of or a substitute for [Schematica](https://minecraft.curseforge.com/projects/schematica),
