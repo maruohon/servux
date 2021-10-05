@@ -1,9 +1,9 @@
 Servux
 ==============
-Litematica is a client-side Minecraft mod using LiteLoader.
-It is more or less a re-creation of or a substitute for [Schematica](https://minecraft.curseforge.com/projects/schematica),
-for players who don't want to have Forge installed.
-For compiled builds (= downloads), see http://minecraft.curseforge.com/projects/litematica
+Servux is a server-side Minecraft mod using Fabric that provides extra support/features for some client-side mods when playing on a server.
+Servux itself is never needed on the clients or in single player, it's only needed/useful when on the server.
+For compiled builds (= downloads), see https://www.curseforge.com/minecraft/mc-mods/servux/files
+Currently version 0.1.x it only has one thing, which is sending structure bounding boxes for MiniHUD so that it can also render those in multiplayer.
 
 Compiling
 =========
