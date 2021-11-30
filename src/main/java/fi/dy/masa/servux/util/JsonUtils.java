@@ -53,7 +53,7 @@ public class JsonUtils
                 el.getAsBoolean();
                 return true;
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return false;
@@ -70,7 +70,7 @@ public class JsonUtils
                 el.getAsInt();
                 return true;
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return false;
@@ -87,7 +87,7 @@ public class JsonUtils
                 el.getAsLong();
                 return true;
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return false;
@@ -104,7 +104,7 @@ public class JsonUtils
                 el.getAsFloat();
                 return true;
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return false;
@@ -121,7 +121,7 @@ public class JsonUtils
                 el.getAsDouble();
                 return true;
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return false;
@@ -138,7 +138,7 @@ public class JsonUtils
                 el.getAsString();
                 return true;
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return false;
@@ -147,25 +147,13 @@ public class JsonUtils
     public static boolean hasObject(JsonObject obj, String name)
     {
         JsonElement el = obj.get(name);
-
-        if (el != null && el.isJsonObject())
-        {
-            return true;
-        }
-
-        return false;
+        return el != null && el.isJsonObject();
     }
 
     public static boolean hasArray(JsonObject obj, String name)
     {
         JsonElement el = obj.get(name);
-
-        if (el != null && el.isJsonArray())
-        {
-            return true;
-        }
-
-        return false;
+        return el != null && el.isJsonArray();
     }
 
     public static boolean getBooleanOrDefault(JsonObject obj, String name, boolean defaultValue)
@@ -176,7 +164,7 @@ public class JsonUtils
             {
                 return obj.get(name).getAsBoolean();
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return defaultValue;
@@ -190,7 +178,7 @@ public class JsonUtils
             {
                 return obj.get(name).getAsInt();
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return defaultValue;
@@ -204,7 +192,7 @@ public class JsonUtils
             {
                 return obj.get(name).getAsLong();
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return defaultValue;
@@ -218,7 +206,7 @@ public class JsonUtils
             {
                 return obj.get(name).getAsFloat();
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return defaultValue;
@@ -232,7 +220,7 @@ public class JsonUtils
             {
                 return obj.get(name).getAsDouble();
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return defaultValue;
@@ -246,7 +234,7 @@ public class JsonUtils
             {
                 return obj.get(name).getAsString();
             }
-            catch (Exception e) {}
+            catch (Exception ignore) {}
         }
 
         return defaultValue;
@@ -312,9 +300,7 @@ public class JsonUtils
                 {
                     return new BlockPos(arr.get(0).getAsInt(), arr.get(1).getAsInt(), arr.get(2).getAsInt());
                 }
-                catch (Exception e)
-                {
-                }
+                catch (Exception ignore) {}
             }
         }
 
@@ -350,9 +336,7 @@ public class JsonUtils
                 {
                     return new Vec3d(arr.get(0).getAsDouble(), arr.get(1).getAsDouble(), arr.get(2).getAsDouble());
                 }
-                catch (Exception e)
-                {
-                }
+                catch (Exception ignore) {}
             }
         }
 
@@ -412,12 +396,9 @@ public class JsonUtils
     {
         try
         {
-            JsonParser parser = new JsonParser();
-            return parser.parse(str);
+            return JsonParser.parseString(str);
         }
-        catch (Exception e)
-        {
-        }
+        catch (Exception ignore) {}
 
         return null;
     }
@@ -429,15 +410,9 @@ public class JsonUtils
         {
             String fileName = file.getAbsolutePath();
 
-            try
+            try (FileReader reader = new FileReader(file))
             {
-                JsonParser parser = new JsonParser();
-                FileReader reader = new FileReader(file);
-
-                JsonElement element = parser.parse(reader);
-                reader.close();
-
-                return element;
+                return JsonParser.parseReader(reader);
             }
             catch (Exception e)
             {
@@ -451,9 +426,6 @@ public class JsonUtils
     /**
      * Converts the given JsonElement tree into its string representation.
      * If <b>compact</b> is true, then it's written in one line without spaces or line breaks.
-     * @param root
-     * @param compact
-     * @return
      */
     public static String jsonToString(JsonElement element, boolean compact)
     {

@@ -11,6 +11,7 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.StructureContext;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
@@ -133,7 +134,7 @@ public class StructureDataProvider extends DataProviderBase
     {
         UUID uuid = player.getUuid();
         ChunkPos center = player.getWatchedSection().toChunkPos();
-        Map<StructureFeature<?>, LongSet> references = this.getStructureReferencesWithinRange(player.getServerWorld(), center, chunkRadius);
+        Map<StructureFeature<?>, LongSet> references = this.getStructureReferencesWithinRange(player.getWorld(), center, chunkRadius);
 
         this.timeouts.remove(uuid);
         this.registeredPlayers.computeIfAbsent(uuid, (u) -> new PlayerDimensionPosition(player)).setPosition(player);
@@ -220,7 +221,7 @@ public class StructureDataProvider extends DataProviderBase
 
         if (positionsToUpdate.isEmpty() == false)
         {
-            ServerWorld world = player.getServerWorld();
+            ServerWorld world = player.getWorld();
             ChunkPos center = player.getWatchedSection().toChunkPos();
             Map<StructureFeature<?>, LongSet> references = new HashMap<>();
 
@@ -271,8 +272,8 @@ public class StructureDataProvider extends DataProviderBase
             StructureFeature<?> feature = entry.getKey();
             LongSet startChunks = entry.getValue();
 
-            // TODO add an option
-            if (startChunks.isEmpty() == false && feature != StructureFeature.MINESHAFT)
+            // TODO add an option && feature != StructureFeature.MINESHAFT
+            if (startChunks.isEmpty() == false)
             {
                 references.merge(feature, startChunks, (oldSet, entrySet) -> {
                     LongOpenHashSet newSet = new LongOpenHashSet(oldSet);
@@ -299,8 +300,8 @@ public class StructureDataProvider extends DataProviderBase
 
         for (Map.Entry<StructureFeature<?>, LongSet> entry : chunk.getStructureReferences().entrySet())
         {
-            // TODO add an option
-            if (entry.getKey() != StructureFeature.MINESHAFT && entry.getValue().isEmpty() == false)
+            // TODO add an option entry.getKey() != StructureFeature.MINESHAFT && 
+            if (entry.getValue().isEmpty() == false)
             {
                 return true;
             }
@@ -366,7 +367,7 @@ public class StructureDataProvider extends DataProviderBase
 
     protected void sendStructures(ServerPlayerEntity player, Map<StructureFeature<?>, LongSet> references, int tickCounter)
     {
-        ServerWorld world = player.getServerWorld();
+        ServerWorld world = player.getWorld();
         Map<ChunkPos, StructureStart<?>> starts = this.getStructureStartsFromReferences(world, references);
 
         if (starts.isEmpty() == false)
@@ -383,7 +384,6 @@ public class StructureDataProvider extends DataProviderBase
         }
     }
 
-
     protected NbtList getStructureList(Map<ChunkPos, StructureStart<?>> structures, ServerWorld world)
     {
         NbtList list = new NbtList();
@@ -391,7 +391,7 @@ public class StructureDataProvider extends DataProviderBase
         for (Map.Entry<ChunkPos, StructureStart<?>> entry : structures.entrySet())
         {
             ChunkPos pos = entry.getKey();
-            list.add(entry.getValue().toNbt(world, pos));
+            list.add(entry.getValue().toNbt(StructureContext.from(world), pos));
         }
 
         return list;
