@@ -391,7 +391,7 @@ public class StructureDataProvider extends DataProviderBase
         for (Map.Entry<ChunkPos, StructureStart<?>> entry : structures.entrySet())
         {
             ChunkPos pos = entry.getKey();
-            list.add(entry.getValue().toNbt(world, new ChunkPos(pos.x,  pos.z)));
+            list.add(entry.getValue().toNbt(world, pos));
         }
 
         return list;
