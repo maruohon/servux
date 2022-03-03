@@ -18,7 +18,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.gen.feature.StructureFeature;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import fi.dy.masa.servux.network.IPluginChannelHandler;
 import fi.dy.masa.servux.network.PacketSplitter;
 import fi.dy.masa.servux.network.packet.StructureDataPacketHandler;
@@ -134,7 +134,8 @@ public class StructureDataProvider extends DataProviderBase
     {
         UUID uuid = player.getUuid();
         ChunkPos center = player.getWatchedSection().toChunkPos();
-        Map<StructureFeature<?>, LongSet> references = this.getStructureReferencesWithinRange(player.getWorld(), center, chunkRadius);
+        Map<ConfiguredStructureFeature<?, ?>, LongSet> references =
+                this.getStructureReferencesWithinRange(player.getWorld(), center, chunkRadius);
 
         this.timeouts.remove(uuid);
         this.registeredPlayers.computeIfAbsent(uuid, (u) -> new PlayerDimensionPosition(player)).setPosition(player);
@@ -170,7 +171,9 @@ public class StructureDataProvider extends DataProviderBase
         }
     }
 
-    protected void addOrRefreshTimeouts(final UUID uuid, final Map<StructureFeature<?>, LongSet> references, final int tickCounter)
+    protected void addOrRefreshTimeouts(final UUID uuid,
+                                        final Map<ConfiguredStructureFeature<?, ?>, LongSet> references,
+                                        final int tickCounter)
     {
         // System.out.printf("addOrRefreshTimeouts: references: %d\n", references.size());
         Map<ChunkPos, Timeout> map = this.timeouts.computeIfAbsent(uuid, (u) -> new HashMap<>());
@@ -223,7 +226,7 @@ public class StructureDataProvider extends DataProviderBase
         {
             ServerWorld world = player.getWorld();
             ChunkPos center = player.getWatchedSection().toChunkPos();
-            Map<StructureFeature<?>, LongSet> references = new HashMap<>();
+            Map<ConfiguredStructureFeature<?, ?>, LongSet> references = new HashMap<>();
 
             for (ChunkPos pos : positionsToUpdate)
             {
@@ -253,7 +256,7 @@ public class StructureDataProvider extends DataProviderBase
         }
     }
 
-    protected void getStructureReferencesFromChunk(int chunkX, int chunkZ, World world, Map<StructureFeature<?>, LongSet> references)
+    protected void getStructureReferencesFromChunk(int chunkX, int chunkZ, World world, Map<ConfiguredStructureFeature<?, ?>, LongSet> references)
     {
         if (world.isChunkLoaded(chunkX, chunkZ) == false)
         {
@@ -267,9 +270,9 @@ public class StructureDataProvider extends DataProviderBase
             return;
         }
 
-        for (Map.Entry<StructureFeature<?>, LongSet> entry : chunk.getStructureReferences().entrySet())
+        for (Map.Entry<ConfiguredStructureFeature<?, ?>, LongSet> entry : chunk.getStructureReferences().entrySet())
         {
-            StructureFeature<?> feature = entry.getKey();
+            ConfiguredStructureFeature<?, ?> feature = entry.getKey();
             LongSet startChunks = entry.getValue();
 
             // TODO add an option && feature != StructureFeature.MINESHAFT
@@ -298,7 +301,7 @@ public class StructureDataProvider extends DataProviderBase
             return false;
         }
 
-        for (Map.Entry<StructureFeature<?>, LongSet> entry : chunk.getStructureReferences().entrySet())
+        for (Map.Entry<ConfiguredStructureFeature<?, ?>, LongSet> entry : chunk.getStructureReferences().entrySet())
         {
             // TODO add an option entry.getKey() != StructureFeature.MINESHAFT && 
             if (entry.getValue().isEmpty() == false)
@@ -310,13 +313,14 @@ public class StructureDataProvider extends DataProviderBase
         return false;
     }
 
-    protected Map<ChunkPos, StructureStart<?>> getStructureStartsFromReferences(ServerWorld world, Map<StructureFeature<?>, LongSet> references)
+    protected Map<ChunkPos, StructureStart>
+    getStructureStartsFromReferences(ServerWorld world, Map<ConfiguredStructureFeature<?, ?>, LongSet> references)
     {
-        Map<ChunkPos, StructureStart<?>> starts = new HashMap<>();
+        Map<ChunkPos, StructureStart> starts = new HashMap<>();
 
-        for (Map.Entry<StructureFeature<?>, LongSet> entry : references.entrySet())
+        for (Map.Entry<ConfiguredStructureFeature<?, ?>, LongSet> entry : references.entrySet())
         {
-            StructureFeature<?> feature = entry.getKey();
+            ConfiguredStructureFeature<?, ?> feature = entry.getKey();
             LongSet startChunks = entry.getValue();
             LongIterator iter = startChunks.iterator();
 
@@ -336,7 +340,7 @@ public class StructureDataProvider extends DataProviderBase
                     continue;
                 }
 
-                StructureStart<?> start = chunk.getStructureStart(feature);
+                StructureStart start = chunk.getStructureStart(feature);
 
                 if (start != null)
                 {
@@ -349,9 +353,10 @@ public class StructureDataProvider extends DataProviderBase
         return starts;
     }
 
-    protected Map<StructureFeature<?>, LongSet> getStructureReferencesWithinRange(ServerWorld world, ChunkPos center, int chunkRadius)
+    protected Map<ConfiguredStructureFeature<?, ?>, LongSet>
+    getStructureReferencesWithinRange(ServerWorld world, ChunkPos center, int chunkRadius)
     {
-        Map<StructureFeature<?>, LongSet> references = new HashMap<>();
+        Map<ConfiguredStructureFeature<?, ?>, LongSet> references = new HashMap<>();
 
         for (int cx = center.x - chunkRadius; cx <= center.x + chunkRadius; ++cx)
         {
@@ -365,10 +370,12 @@ public class StructureDataProvider extends DataProviderBase
         return references;
     }
 
-    protected void sendStructures(ServerPlayerEntity player, Map<StructureFeature<?>, LongSet> references, int tickCounter)
+    protected void sendStructures(ServerPlayerEntity player,
+                                  Map<ConfiguredStructureFeature<?, ?>, LongSet> references,
+                                  int tickCounter)
     {
         ServerWorld world = player.getWorld();
-        Map<ChunkPos, StructureStart<?>> starts = this.getStructureStartsFromReferences(world, references);
+        Map<ChunkPos, StructureStart> starts = this.getStructureStartsFromReferences(world, references);
 
         if (starts.isEmpty() == false)
         {
@@ -384,11 +391,11 @@ public class StructureDataProvider extends DataProviderBase
         }
     }
 
-    protected NbtList getStructureList(Map<ChunkPos, StructureStart<?>> structures, ServerWorld world)
+    protected NbtList getStructureList(Map<ChunkPos, StructureStart> structures, ServerWorld world)
     {
         NbtList list = new NbtList();
 
-        for (Map.Entry<ChunkPos, StructureStart<?>> entry : structures.entrySet())
+        for (Map.Entry<ChunkPos, StructureStart> entry : structures.entrySet())
         {
             ChunkPos pos = entry.getKey();
             list.add(entry.getValue().toNbt(StructureContext.from(world), pos));
