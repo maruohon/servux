@@ -8,10 +8,9 @@ public interface ClientPacketHandler
 {
     Identifier getChannel();
 
-    default boolean canSubscribe()
-    {
-        return false;
-    }
+    boolean canSubscribe();
+
+    boolean usePacketSplitter();
 
     default void onPacketReceived(PacketByteBuf buf, ServerPlayNetworkHandler netHandler)
     {

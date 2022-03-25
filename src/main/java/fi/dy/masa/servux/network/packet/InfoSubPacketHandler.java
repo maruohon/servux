@@ -6,10 +6,10 @@ import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.PacketByteBuf;
 import fi.dy.masa.servux.dataprovider.InfoSubDataProvider;
-import fi.dy.masa.servux.network.ClientPacketHandler;
+import fi.dy.masa.servux.network.BaseClientPacketHandler;
 import fi.dy.masa.servux.util.data.Constants;
 
-public class InfoSubPacketHandler implements ClientPacketHandler
+public class InfoSubPacketHandler extends BaseClientPacketHandler
 {
     public static final Identifier REG_CHANNEL = new Identifier("servux:info_reg");
     public static final Identifier DATA_CHANNEL = new Identifier("servux:info_data");
@@ -18,6 +18,10 @@ public class InfoSubPacketHandler implements ClientPacketHandler
 
     public static final int PROTOCOL_VERSION = 1;
     public static final int PACKET_S2C_METADATA = 1;
+
+    protected InfoSubPacketHandler()
+    {
+    }
 
     @Override
     public Identifier getChannel()

@@ -27,7 +27,7 @@ public class PacketSplitter
 
     private static final Map<Pair<PacketListener, String>, ReadingSession> READING_SESSIONS = new HashMap<>();
 
-    public static void send(PacketByteBuf packet, Identifier channel, ServerPlayNetworkHandler networkHandler)
+    public static void send(Identifier channel, PacketByteBuf packet, ServerPlayNetworkHandler networkHandler)
     {
         send(packet, MAX_PAYLOAD_PER_PACKET_S2C, buf -> networkHandler.sendPacket(new CustomPayloadS2CPacket(channel.toString(), buf)));
     }
@@ -85,7 +85,7 @@ public class PacketSplitter
         buf.writeVarInt(packetType);
         buf.writeCompoundTag(data);
 
-        send(buf, channel, networkHandler);
+        send(channel, buf, networkHandler);
     }
 
     private static class ReadingSession

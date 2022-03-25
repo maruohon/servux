@@ -57,8 +57,17 @@ public class PacketChannelHandler
                                       ClientPacketHandler handler,
                                       ServerPlayNetworkHandler netHandler)
     {
-        PacketByteBuf buf = PacketSplitter.receive(channel, data, netHandler);
-        data.release();
+        PacketByteBuf buf;
+
+        if (handler.usePacketSplitter())
+        {
+            buf = PacketSplitter.receive(channel, data, netHandler);
+            data.release();
+        }
+        else
+        {
+            buf = data;
+        }
 
         // Finished the complete packet
         if (buf != null)

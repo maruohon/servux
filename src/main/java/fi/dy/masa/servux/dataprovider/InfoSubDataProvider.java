@@ -1,14 +1,12 @@
 package fi.dy.masa.servux.dataprovider;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -21,8 +19,8 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.PacketByteBuf;
 import fi.dy.masa.servux.network.ClientPacketHandler;
-import fi.dy.masa.servux.network.PacketSplitter;
 import fi.dy.masa.servux.network.packet.InfoSubPacketHandler;
+import fi.dy.masa.servux.network.util.PacketUtils;
 import fi.dy.masa.servux.util.EntityUtils;
 import fi.dy.masa.servux.util.NbtUtils;
 import fi.dy.masa.servux.util.WorldUtils;
@@ -36,11 +34,11 @@ public class InfoSubDataProvider extends BaseDataProvider
 {
     public static final InfoSubDataProvider INSTANCE = new InfoSubDataProvider();
 
-    protected final ListMultimap<UUID, Integer> registeredChannels = ArrayListMultimap.create();
     protected final Int2ObjectOpenHashMap<BiConsumer<PacketByteBuf, ServerPlayerEntity>> dataWriters = new Int2ObjectOpenHashMap<>();
+    protected final HashMap<UUID, IntOpenHashSet> registeredChannels = new HashMap<>();
 
-    protected final Int2ObjectOpenHashMap<MobCaps> mobCapsPerDimension = new Int2ObjectOpenHashMap<>();
     protected final Int2ObjectOpenHashMap<PerDimensionObjectCounts> perDimensionCounts = new Int2ObjectOpenHashMap<>();
+    protected final Int2ObjectOpenHashMap<MobCaps> mobCapsPerDimension = new Int2ObjectOpenHashMap<>();
     protected final TpsData tpsData = new TpsData();
     protected HashMapPalette<String> channelIdPalette = new HashMapPalette<>(7, this::resizePalette);
 
@@ -115,25 +113,33 @@ public class InfoSubDataProvider extends BaseDataProvider
 
         if (id >= 0)
         {
-            this.registeredChannels.put(netHandler.player.getUuid(), id);
+            this.registeredChannels.computeIfAbsent(netHandler.player.getUuid(), (u) -> new IntOpenHashSet()).add(id);
             this.setNeedsSubscriberCheck();
         }
     }
 
     public void unregister(String channel, ServerPlayNetworkHandler netHandler)
     {
+        UUID uuid = netHandler.player.getUuid();
+        IntOpenHashSet set = this.registeredChannels.get(uuid);
         int id = this.channelIdPalette.getIdFor(channel);
 
-        if (id >= 0)
+        if (id >= 0 && set != null)
         {
-            this.registeredChannels.remove(netHandler.player.getUuid(), id);
+            set.rem(id);
+
+            if (set.isEmpty())
+            {
+                this.registeredChannels.remove(uuid);
+            }
+
             this.setNeedsSubscriberCheck();
         }
     }
 
     public void unregisterAllChannels(UUID uuid)
     {
-        this.registeredChannels.removeAll(uuid);
+        this.registeredChannels.remove(uuid);
         this.setNeedsSubscriberCheck();
     }
 
@@ -144,9 +150,9 @@ public class InfoSubDataProvider extends BaseDataProvider
         tag.putInt("version", this.getProtocolVersion());
         tag.put("channel_ids", NbtUtils.asListTag(this.channelIdPalette.getMapping()));
 
-        PacketSplitter.sendPacketTypeAndCompound(InfoSubPacketHandler.REG_CHANNEL,
-                                                 InfoSubPacketHandler.PACKET_S2C_METADATA,
-                                                 tag, netHandler);
+        PacketUtils.sendPacketTypeAndCompound(InfoSubPacketHandler.REG_CHANNEL,
+                                              InfoSubPacketHandler.PACKET_S2C_METADATA,
+                                              tag, netHandler);
     }
 
     protected void setNeedsSubscriberCheck()
@@ -166,17 +172,9 @@ public class InfoSubDataProvider extends BaseDataProvider
         }
     }
 
-    protected boolean containsAny(IntOpenHashSet haystack, Collection<Integer> needles)
+    protected boolean containsAny(IntOpenHashSet haystack, Collection<IntOpenHashSet> sets)
     {
-        for (int value : needles)
-        {
-            if (haystack.contains(value))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return sets.stream().anyMatch((s) -> s.stream().anyMatch(haystack::contains));
     }
 
     protected void sendUpdatePackets(MinecraftServer server)
@@ -196,7 +194,7 @@ public class InfoSubDataProvider extends BaseDataProvider
         }
     }
 
-    protected void sendUpdateToPlayer(ServerPlayerEntity player, List<Integer> channelIds)
+    protected void sendUpdateToPlayer(ServerPlayerEntity player, IntOpenHashSet channelIds)
     {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeVarInt(channelIds.size());
@@ -206,7 +204,7 @@ public class InfoSubDataProvider extends BaseDataProvider
             this.addDataForChannel(channelId, buf, player);
         }
 
-        PacketSplitter.send(buf, InfoSubPacketHandler.DATA_CHANNEL, player.networkHandler);
+        PacketUtils.send(InfoSubPacketHandler.DATA_CHANNEL, buf, player.networkHandler);
     }
 
     protected void addDataForChannel(int channelId, PacketByteBuf buf, ServerPlayerEntity player)
