@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.MinecraftServer;
@@ -39,7 +40,6 @@ import fi.dy.masa.servux.network.PacketSplitter;
 import fi.dy.masa.servux.network.packet.StructureDataPacketHandler;
 import fi.dy.masa.servux.util.PositionUtils;
 import fi.dy.masa.servux.util.data.PlayerDimensionPosition;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 
 public class StructureDataProvider extends BaseDataProvider
 {

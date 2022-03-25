@@ -2,16 +2,16 @@ package fi.dy.masa.servux;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import fi.dy.masa.servux.dataprovider.DataProviderManager;
-import fi.dy.masa.servux.dataprovider.InfoSubDataProvider;
-import fi.dy.masa.servux.dataprovider.StructureDataProvider;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import fi.dy.masa.servux.dataprovider.DataProviderManager;
+import fi.dy.masa.servux.dataprovider.InfoSubDataProvider;
+import fi.dy.masa.servux.dataprovider.StructureDataProvider;
 
 public class Servux implements ModInitializer
 {
-    public static final Logger logger = LogManager.getLogger(Reference.MOD_ID);
+    public static final Logger LOGGER = LogManager.getLogger(Reference.MOD_ID);
 
     @Override
     public void onInitialize()

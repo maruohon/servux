@@ -441,7 +441,7 @@ public class JsonUtils
             }
             catch (Exception e)
             {
-                Servux.logger.error("Failed to parse the JSON file '{}'", fileName, e);
+                Servux.LOGGER.error("Failed to parse the JSON file '{}'", fileName, e);
             }
         }
 
@@ -480,7 +480,7 @@ public class JsonUtils
         }
         catch (IOException e)
         {
-            Servux.logger.warn("Failed to write JSON data to file '{}'", file.getAbsolutePath(), e);
+            Servux.LOGGER.warn("Failed to write JSON data to file '{}'", file.getAbsolutePath(), e);
         }
         finally
         {
@@ -493,7 +493,7 @@ public class JsonUtils
             }
             catch (Exception e)
             {
-                Servux.logger.warn("Failed to close JSON file", e);
+                Servux.LOGGER.warn("Failed to close JSON file", e);
             }
         }
 

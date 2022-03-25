@@ -1,5 +1,6 @@
 package fi.dy.masa.servux.util.data;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.world.PlayerChunkWatchingEntry;
@@ -7,7 +8,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.border.WorldBorder;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
 public class MobCaps
 {

@@ -7,9 +7,11 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import io.netty.buffer.Unpooled;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.nbt.CompoundTag;
@@ -29,8 +31,6 @@ import fi.dy.masa.servux.util.data.PerDimensionObjectCounts;
 import fi.dy.masa.servux.util.data.TpsData;
 import fi.dy.masa.servux.util.palette.HashMapPalette;
 import fi.dy.masa.servux.util.palette.Palette;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
 public class InfoSubDataProvider extends BaseDataProvider
 {

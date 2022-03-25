@@ -1,8 +1,8 @@
 package fi.dy.masa.servux.network.util;
 
 import java.util.Objects;
-import net.minecraft.util.PacketByteBuf;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.util.PacketByteBuf;
 
 public class PacketUtils
 {
