@@ -1,30 +1,19 @@
-package fi.dy.masa.servux.mixin.placementprotocol;
+package fi.dy.masa.servux.mixin.placement;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.DispenserBlock;
+import net.minecraft.block.PistonBlock;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import fi.dy.masa.servux.config.Configs;
 
-@Mixin(DispenserBlock.class)
-public class MixinDispenserBlock
+@Mixin(PistonBlock.class)
+public abstract class PistonBlockMixin
 {
-    @Inject(method = "method_26570", at = @At("HEAD"), cancellable = true)
-    private void servux_fixRotation(CallbackInfo ci)
-    {
-        if (Configs.Generic.PLACEMENT_PROTOCOL_ENABLED.getBooleanValue())
-        {
-            ci.cancel();
-        }
-    }
-
     @Redirect(method = "onPlaced",
               at = @At(value = "INVOKE",
                        target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))

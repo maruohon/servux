@@ -7,7 +7,7 @@ import net.minecraft.structure.StructureStart;
 import net.minecraft.world.gen.feature.StructureFeature;
 
 @Mixin(StructureFeature.class)
-public interface IMixinStructureFeature
+public interface StructureFeatureMixin
 {
     @Accessor("field_26039")
     Long2ObjectMap<StructureStart> servux_getStructureMap();

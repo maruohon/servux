@@ -1,4 +1,4 @@
-package fi.dy.masa.servux.mixin.placementprotocol;
+package fi.dy.masa.servux.mixin.placement;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,7 +18,7 @@ import fi.dy.masa.servux.config.Configs;
 import fi.dy.masa.servux.util.PlacementHandler;
 
 @Mixin({BlockItem.class, PlaceableItem.class })
-public abstract class MixinBlockItem
+public abstract class BlockItemMixin
 {
     @Redirect(method = "useOnBlock", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/block/Block;getPlacementState(" +

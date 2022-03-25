@@ -7,7 +7,7 @@ import net.minecraft.world.gen.chunk.FlatChunkGenerator;
 import net.minecraft.world.gen.feature.StructureFeature;
 
 @Mixin(FlatChunkGenerator.class)
-public interface IMixinFlatChunkGenerator
+public interface FlatChunkGeneratorMixin
 {
     @Accessor("features")
     Map<String, StructureFeature> servux_getStructureFeatureMap();

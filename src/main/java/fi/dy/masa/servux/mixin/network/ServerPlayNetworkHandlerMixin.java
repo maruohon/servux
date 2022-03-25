@@ -9,7 +9,7 @@ import net.minecraft.server.network.ServerPlayNetworkHandler;
 import fi.dy.masa.servux.network.PacketChannelHandler;
 
 @Mixin(value = ServerPlayNetworkHandler.class, priority = 998)
-public abstract class MixinServerPlayNetworkHandler
+public abstract class ServerPlayNetworkHandlerMixin
 {
     @Inject(method = "onCustomPayload", at = @At("HEAD"))
     private void servux_onCustomPayload(CustomPayloadC2SPacket packet, CallbackInfo ci)

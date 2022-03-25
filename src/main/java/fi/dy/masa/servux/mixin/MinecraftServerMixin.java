@@ -11,7 +11,7 @@ import net.minecraft.util.profiler.Profiler;
 import fi.dy.masa.servux.dataprovider.DataProviderManager;
 
 @Mixin(MinecraftServer.class)
-public abstract class MixinMinecraftServer
+public abstract class MinecraftServerMixin
 {
     @Shadow @Final public Profiler profiler;
     @Shadow private int ticks;

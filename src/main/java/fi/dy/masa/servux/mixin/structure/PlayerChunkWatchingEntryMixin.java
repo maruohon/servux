@@ -11,7 +11,7 @@ import net.minecraft.world.chunk.Chunk;
 import fi.dy.masa.servux.dataprovider.StructureDataProvider;
 
 @Mixin(PlayerChunkWatchingEntry.class)
-public abstract class MixinPlayerChunkWatchingEntry
+public abstract class PlayerChunkWatchingEntryMixin
 {
     @Shadow private Chunk chunk;
 

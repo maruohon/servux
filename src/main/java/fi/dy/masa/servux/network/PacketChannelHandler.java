@@ -8,7 +8,7 @@ import com.google.common.base.Charsets;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.util.PacketByteBuf;
-import fi.dy.masa.servux.mixin.network.IMixinCustomPayloadC2SPacket;
+import fi.dy.masa.servux.mixin.network.CustomPayloadC2SPacketMixin;
 import fi.dy.masa.servux.network.util.PacketUtils;
 
 public class PacketChannelHandler
@@ -87,7 +87,7 @@ public class PacketChannelHandler
 
     public void processPacketFromClient(CustomPayloadC2SPacket packet, ServerPlayNetworkHandler netHandler)
     {
-        IMixinCustomPayloadC2SPacket accessor = ((IMixinCustomPayloadC2SPacket) packet);
+        CustomPayloadC2SPacketMixin accessor = ((CustomPayloadC2SPacketMixin) packet);
         String channel = accessor.servux_getChannel();
         PacketByteBuf data = accessor.servux_getData();
         ClientPacketHandler handler;

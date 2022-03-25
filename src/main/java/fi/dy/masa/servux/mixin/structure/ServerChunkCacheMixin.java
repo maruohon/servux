@@ -6,7 +6,7 @@ import net.minecraft.server.world.ServerChunkCache;
 import net.minecraft.world.chunk.ChunkGenerator;
 
 @Mixin(ServerChunkCache.class)
-public interface IMixinServerChunkCache
+public interface ServerChunkCacheMixin
 {
     @Accessor("generator")
     ChunkGenerator servux_getChunkGenerator();

@@ -1,7 +1,7 @@
 package fi.dy.masa.servux.util.data;
 
 import net.minecraft.server.world.ServerWorld;
-import fi.dy.masa.servux.mixin.infosub.IMixinServerWorld;
+import fi.dy.masa.servux.mixin.infosub.ServerWorldMixin;
 
 public class PerDimensionObjectCounts
 {
@@ -48,6 +48,6 @@ public class PerDimensionObjectCounts
         this.loadedEntities = world.field_23572.size();
         this.loadedBlockEntities = world.blockEntities.size();
         this.loadedBlockEntitiesTicking = world.tickingBlockEntities.size();
-        this.scheduledTicks = ((IMixinServerWorld) world).servux_getScheduledTicks().size();
+        this.scheduledTicks = ((ServerWorldMixin) world).servux_getScheduledTicks().size();
     }
 }

@@ -10,7 +10,7 @@ import net.minecraft.world.gen.feature.VillageFeature;
 import net.minecraft.world.gen.feature.WoodlandMansionFeature;
 
 @Mixin(OverworldChunkGenerator.class)
-public interface IMixinOverworldChunkGenerator
+public interface OverworldChunkGeneratorMixin
 {
     @Accessor("oceanMonumentFeature")
     OceanMonumentFeature servux_getOceanMonumentFeature();

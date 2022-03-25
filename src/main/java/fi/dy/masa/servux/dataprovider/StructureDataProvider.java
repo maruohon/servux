@@ -29,12 +29,12 @@ import net.minecraft.world.gen.feature.OceanMonumentFeature;
 import net.minecraft.world.gen.feature.StrongholdFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.gen.feature.VillageFeature;
-import fi.dy.masa.servux.mixin.structure.IMixinEndChunkGenerator;
-import fi.dy.masa.servux.mixin.structure.IMixinFlatChunkGenerator;
-import fi.dy.masa.servux.mixin.structure.IMixinNetherChunkGenerator;
-import fi.dy.masa.servux.mixin.structure.IMixinOverworldChunkGenerator;
-import fi.dy.masa.servux.mixin.structure.IMixinServerChunkCache;
-import fi.dy.masa.servux.mixin.structure.IMixinStructureFeature;
+import fi.dy.masa.servux.mixin.structure.EndChunkGeneratorMixin;
+import fi.dy.masa.servux.mixin.structure.FlatChunkGeneratorMixin;
+import fi.dy.masa.servux.mixin.structure.NetherChunkGeneratorMixin;
+import fi.dy.masa.servux.mixin.structure.OverworldChunkGeneratorMixin;
+import fi.dy.masa.servux.mixin.structure.ServerChunkCacheMixin;
+import fi.dy.masa.servux.mixin.structure.StructureFeatureMixin;
 import fi.dy.masa.servux.network.ClientPacketHandler;
 import fi.dy.masa.servux.network.PacketSplitter;
 import fi.dy.masa.servux.network.packet.StructureDataPacketHandler;
@@ -158,7 +158,7 @@ public class StructureDataProvider extends BaseDataProvider
         this.registeredPlayers.computeIfAbsent(uuid, (u) -> new PlayerDimensionPosition(player)).setPosition(player);
 
         List<StructureStart> list = new ArrayList<>();
-        ChunkGenerator generator = ((IMixinServerChunkCache) ((ServerWorld) player.getEntityWorld()).getChunkManager()).servux_getChunkGenerator();
+        ChunkGenerator generator = ((ServerChunkCacheMixin) ((ServerWorld) player.getEntityWorld()).getChunkManager()).servux_getChunkGenerator();
 
         this.getStructuresFromGenerator(list, generator, new BlockPos(player), chunkRadius * 16);
         this.sendStructuresToPlayer(list, player);
@@ -192,34 +192,34 @@ public class StructureDataProvider extends BaseDataProvider
         {
             StructureFeature feature;
 
-            feature = ((IMixinOverworldChunkGenerator) chunkGenerator).servux_getOceanMonumentFeature();
+            feature = ((OverworldChunkGeneratorMixin) chunkGenerator).servux_getOceanMonumentFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
 
-            feature = ((IMixinOverworldChunkGenerator) chunkGenerator).servux_getTempleFeature();
+            feature = ((OverworldChunkGeneratorMixin) chunkGenerator).servux_getTempleFeature();
             this.addTempleStructuresWithinRange(listOut, feature, center, maxRange);
 
-            feature = ((IMixinOverworldChunkGenerator) chunkGenerator).servux_getStrongholdFeature();
+            feature = ((OverworldChunkGeneratorMixin) chunkGenerator).servux_getStrongholdFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
 
-            feature = ((IMixinOverworldChunkGenerator) chunkGenerator).servux_getVillageFeature();
+            feature = ((OverworldChunkGeneratorMixin) chunkGenerator).servux_getVillageFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
 
-            feature = ((IMixinOverworldChunkGenerator) chunkGenerator).servux_getWoodlandMansionFeature();
+            feature = ((OverworldChunkGeneratorMixin) chunkGenerator).servux_getWoodlandMansionFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
         }
         else if (chunkGenerator instanceof NetherChunkGenerator)
         {
-            StructureFeature feature = ((IMixinNetherChunkGenerator) chunkGenerator).servux_getFortressFeature();
+            StructureFeature feature = ((NetherChunkGeneratorMixin) chunkGenerator).servux_getFortressFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
         }
         else if (chunkGenerator instanceof EndChunkGenerator)
         {
-            StructureFeature feature = ((IMixinEndChunkGenerator) chunkGenerator).servux_getEndCityFeature();
+            StructureFeature feature = ((EndChunkGeneratorMixin) chunkGenerator).servux_getEndCityFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
         }
         else if (chunkGenerator instanceof FlatChunkGenerator)
         {
-            Map<String, StructureFeature> map = ((IMixinFlatChunkGenerator) chunkGenerator).servux_getStructureFeatureMap();
+            Map<String, StructureFeature> map = ((FlatChunkGeneratorMixin) chunkGenerator).servux_getStructureFeatureMap();
 
             for (StructureFeature feature : map.values())
             {
@@ -245,7 +245,7 @@ public class StructureDataProvider extends BaseDataProvider
 
     protected void addStructuresWithinRange(List<StructureStart> listOut, StructureFeature feature, BlockPos center, int maxRange)
     {
-        Long2ObjectMap<StructureStart> structureMap = ((IMixinStructureFeature) feature).servux_getStructureMap();
+        Long2ObjectMap<StructureStart> structureMap = ((StructureFeatureMixin) feature).servux_getStructureMap();
 
         for (StructureStart start : structureMap.values())
         {
@@ -258,7 +258,7 @@ public class StructureDataProvider extends BaseDataProvider
 
     protected void addTempleStructuresWithinRange(List<StructureStart> listOut, StructureFeature feature, BlockPos center, int maxRange)
     {
-        Long2ObjectMap<StructureStart> structureMap = ((IMixinStructureFeature) feature).servux_getStructureMap();
+        Long2ObjectMap<StructureStart> structureMap = ((StructureFeatureMixin) feature).servux_getStructureMap();
 
         for (StructureStart start : structureMap.values())
         {

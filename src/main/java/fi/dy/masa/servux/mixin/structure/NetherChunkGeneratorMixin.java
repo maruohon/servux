@@ -6,7 +6,7 @@ import net.minecraft.world.gen.chunk.NetherChunkGenerator;
 import net.minecraft.world.gen.feature.NetherFortressFeature;
 
 @Mixin(NetherChunkGenerator.class)
-public interface IMixinNetherChunkGenerator
+public interface NetherChunkGeneratorMixin
 {
     @Accessor("netherFortressFeature")
     NetherFortressFeature servux_getFortressFeature();

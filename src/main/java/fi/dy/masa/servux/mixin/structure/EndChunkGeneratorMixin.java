@@ -6,7 +6,7 @@ import net.minecraft.world.gen.chunk.EndChunkGenerator;
 import net.minecraft.world.gen.feature.EndCityFeature;
 
 @Mixin(EndChunkGenerator.class)
-public interface IMixinEndChunkGenerator
+public interface EndChunkGeneratorMixin
 {
     @Accessor("endCityFeature")
     EndCityFeature servux_getEndCityFeature();

@@ -6,7 +6,7 @@ import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 import net.minecraft.util.PacketByteBuf;
 
 @Mixin(CustomPayloadC2SPacket.class)
-public interface IMixinCustomPayloadC2SPacket
+public interface CustomPayloadC2SPacketMixin
 {
     @Accessor("field_31341")
     String servux_getChannel();
