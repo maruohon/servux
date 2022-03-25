@@ -1,26 +1,26 @@
 {
-    "required": true,
-    "package": "fi.dy.masa.servux.mixin",
-    "compatibilityLevel": "JAVA_8",
-    "minVersion": "0.7",
-    "mixins": [
-        "IMixinCustomPayloadC2SPacket",
-        "MixinMinecraftServer",
-        "MixinServerPlayNetworkHandler",
-        "infosub.IMixinServerWorld",
-        "placementprotocol.MixinBlockItem",
-        "placementprotocol.MixinDispenserBlock",
-        "placementprotocol.MixinFurnaceBlock",
-        "placementprotocol.MixinPistonBlock",
-        "structure.IMixinEndChunkGenerator",
-        "structure.IMixinFlatChunkGenerator",
-        "structure.IMixinNetherChunkGenerator",
-        "structure.IMixinOverworldChunkGenerator",
-        "structure.IMixinServerChunkCache",
-        "structure.IMixinStructureFeature",
-        "structure.MixinPlayerChunkWatchingEntry"
-    ],
-    "injectors": {
-        "defaultRequire": 1
-    }
+	"required": true,
+	"package": "fi.dy.masa.servux.mixin",
+	"compatibilityLevel": "JAVA_8",
+	"minVersion": "0.7",
+	"mixins": [
+		"MixinMinecraftServer",
+		"infosub.IMixinServerWorld",
+		"network.IMixinCustomPayloadC2SPacket",
+		"network.MixinServerPlayNetworkHandler",
+		"placementprotocol.MixinBlockItem",
+		"placementprotocol.MixinDispenserBlock",
+		"placementprotocol.MixinFurnaceBlock",
+		"placementprotocol.MixinPistonBlock",
+		"structure.IMixinEndChunkGenerator",
+		"structure.IMixinFlatChunkGenerator",
+		"structure.IMixinNetherChunkGenerator",
+		"structure.IMixinOverworldChunkGenerator",
+		"structure.IMixinServerChunkCache",
+		"structure.IMixinStructureFeature",
+		"structure.MixinPlayerChunkWatchingEntry"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
 }
