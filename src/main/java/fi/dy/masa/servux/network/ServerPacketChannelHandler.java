@@ -127,8 +127,8 @@ public class ServerPacketChannelHandler
 
     private static List<Identifier> getChannels(PacketByteBuf buf)
     {
-        buf = PacketUtils.slice(buf);
         buf.readerIndex(0);
+        buf = PacketUtils.slice(buf);
 
         byte[] bytes = new byte[buf.readableBytes()];
         buf.readBytes(bytes);
@@ -142,9 +142,7 @@ public class ServerPacketChannelHandler
                 Identifier id = new Identifier(channel);
                 channels.add(id);
             }
-            catch (Exception ignore)
-            {
-            }
+            catch (Exception ignore) {}
         }
 
         return channels;
