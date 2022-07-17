@@ -15,8 +15,10 @@ import fi.dy.masa.servux.dataproviders.StructureDataProvider;
 public abstract class MixinThreadedAnvilChunkStorage
 {
     @Inject(method = "sendChunkDataPackets", at = @At("HEAD"))
-    private void onSendChunkPacket(ServerPlayerEntity player, MutableObject<ChunkDataS2CPacket> cachedDataPacket,
-                                   WorldChunk chunk, CallbackInfo ci)
+    private void servux_onSendChunkPacket(ServerPlayerEntity player,
+                                          MutableObject<ChunkDataS2CPacket> cachedDataPacket,
+                                          WorldChunk chunk,
+                                          CallbackInfo ci)
     {
         if (StructureDataProvider.INSTANCE.isEnabled())
         {

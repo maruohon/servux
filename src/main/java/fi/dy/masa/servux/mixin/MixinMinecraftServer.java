@@ -17,7 +17,7 @@ public abstract class MixinMinecraftServer
     @Shadow private int ticks;
 
     @Inject(method = "tick", at = @At("RETURN"))
-    private void onTickEnd(BooleanSupplier supplier, CallbackInfo ci)
+    private void servux_onTickEnd(BooleanSupplier supplier, CallbackInfo ci)
     {
         this.profiler.push("servux_tick");
         DataProviderManager.INSTANCE.tickProviders((MinecraftServer) (Object) this, this.ticks);
