@@ -29,12 +29,12 @@ public class StructureDataPacketHandler implements IPluginChannelHandler
     @Override
     public boolean subscribe(ServerPlayNetworkHandler netHandler)
     {
-        return StructureDataProvider.INSTANCE.register(netHandler.player);
+        return StructureDataProvider.INSTANCE.register(netHandler.getPlayer());
     }
 
     @Override
     public boolean unsubscribe(ServerPlayNetworkHandler netHandler)
     {
-        return StructureDataProvider.INSTANCE.unregister(netHandler.player);
+        return StructureDataProvider.INSTANCE.unregister(netHandler.getPlayer());
     }
 }

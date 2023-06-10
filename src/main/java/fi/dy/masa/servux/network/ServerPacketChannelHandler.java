@@ -122,7 +122,7 @@ public class ServerPacketChannelHandler
 
     private void schedule(Runnable task, ServerPlayNetworkHandler netHandler)
     {
-        netHandler.player.server.execute(task);
+        netHandler.getPlayer().getServer().execute(task);
     }
 
     private static List<Identifier> getChannels(PacketByteBuf buf)
