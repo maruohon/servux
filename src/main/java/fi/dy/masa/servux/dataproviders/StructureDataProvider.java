@@ -135,7 +135,7 @@ public class StructureDataProvider extends DataProviderBase
         UUID uuid = player.getUuid();
         ChunkPos center = player.getWatchedSection().toChunkPos();
         Map<Structure, LongSet> references =
-                this.getStructureReferencesWithinRange(player.getWorld(), center, chunkRadius);
+                this.getStructureReferencesWithinRange(player.getServerWorld(), center, chunkRadius);
 
         this.timeouts.remove(uuid);
         this.registeredPlayers.computeIfAbsent(uuid, (u) -> new PlayerDimensionPosition(player)).setPosition(player);
@@ -224,7 +224,7 @@ public class StructureDataProvider extends DataProviderBase
 
         if (positionsToUpdate.isEmpty() == false)
         {
-            ServerWorld world = player.getWorld();
+            ServerWorld world = player.getServerWorld();
             ChunkPos center = player.getWatchedSection().toChunkPos();
             Map<Structure, LongSet> references = new HashMap<>();
 
@@ -374,7 +374,7 @@ public class StructureDataProvider extends DataProviderBase
                                   Map<Structure, LongSet> references,
                                   int tickCounter)
     {
-        ServerWorld world = player.getWorld();
+        ServerWorld world = player.getServerWorld();
         Map<ChunkPos, StructureStart> starts = this.getStructureStartsFromReferences(world, references);
 
         if (starts.isEmpty() == false)
