@@ -2,18 +2,17 @@ package fi.dy.masa.servux.network;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import org.apache.commons.lang3.tuple.Pair;
+
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.PacketListener;
-import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
-import fi.dy.masa.servux.network.util.PacketUtils;
 
 /**
  * Network packet splitter code from QuickCarpet by skyrising
@@ -27,16 +26,16 @@ public class PacketSplitter
 
     private static final Map<Pair<PacketListener, Identifier>, ReadingSession> READING_SESSIONS = new HashMap<>();
 
-    public static void send(PacketByteBuf packet, Identifier channel, ServerPlayNetworkHandler networkHandler)
+    public static void send(Identifier channel, PacketByteBuf packet, ServerPlayerEntity player)
     {
-        send(packet, MAX_PAYLOAD_PER_PACKET_S2C, buf -> networkHandler.sendPacket(new CustomPayloadS2CPacket(channel, buf)));
+        send(channel, packet, MAX_PAYLOAD_PER_PACKET_S2C, player);
     }
 
-    private static void send(PacketByteBuf packet, int payloadLimit, Consumer<PacketByteBuf> sender)
+    private static void send(Identifier channel, PacketByteBuf packet, int payloadLimit, ServerPlayerEntity player)
     {
         int len = packet.writerIndex();
 
-        packet.readerIndex(0);
+        packet.resetReaderIndex();
 
         for (int offset = 0; offset < len; offset += payloadLimit)
         {
@@ -49,20 +48,26 @@ public class PacketSplitter
             }
 
             buf.writeBytes(packet, thisLen);
-            sender.accept(buf);
+
+            ServerPlayNetworking.send(player, channel, buf);
         }
 
         packet.release();
     }
 
     @Nullable
-    public static PacketByteBuf receive(Identifier channel, PacketByteBuf data, ServerPlayNetworkHandler networkHandler)
+    public static PacketByteBuf receive(Identifier channel,
+                                        PacketByteBuf buf,
+                                        ServerPlayNetworkHandler networkHandler)
     {
-        return receive(channel, data, DEFAULT_MAX_RECEIVE_SIZE_C2S, networkHandler);
+        return receive(channel, buf, DEFAULT_MAX_RECEIVE_SIZE_C2S, networkHandler);
     }
 
     @Nullable
-    private static PacketByteBuf receive(Identifier channel, PacketByteBuf data, int maxLength, ServerPlayNetworkHandler networkHandler)
+    private static PacketByteBuf receive(Identifier channel,
+                                         PacketByteBuf data,
+                                         int maxLength,
+                                         ServerPlayNetworkHandler networkHandler)
     {
         Pair<PacketListener, Identifier> key = Pair.of(networkHandler, channel);
         return READING_SESSIONS.computeIfAbsent(key, ReadingSession::new).receive(data, maxLength);
@@ -73,19 +78,11 @@ public class PacketSplitter
      */
     public static void sendPacketTypeAndCompound(Identifier channel, int packetType, NbtCompound data, ServerPlayerEntity player)
     {
-        sendPacketTypeAndCompound(channel, packetType, data, player.networkHandler);
-    }
-
-    /**
-     * Sends a packet type ID as a VarInt, and then the given Compound tag.
-     */
-    public static void sendPacketTypeAndCompound(Identifier channel, int packetType, NbtCompound data, ServerPlayNetworkHandler networkHandler)
-    {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeVarInt(packetType);
         buf.writeNbt(data);
 
-        send(buf, channel, networkHandler);
+        send(channel, buf, player);
     }
 
     private static class ReadingSession
@@ -103,7 +100,7 @@ public class PacketSplitter
         private PacketByteBuf receive(PacketByteBuf data, int maxLength)
         {
             data.readerIndex(0);
-            data = PacketUtils.slice(data);
+            //data = PacketUtils.slice(data);
 
             if (this.expectedSize < 0)
             {
