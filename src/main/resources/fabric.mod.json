@@ -6,6 +6,7 @@
 
 	"description": "Server-side support and integration for masa's client mods",
 	"license": "LGPLv3",
+	"icon": "assets/servux/icon.png",
 	"authors": [
 		"masa"
 	],
@@ -16,7 +17,7 @@
 		"discord": "https://discordapp.com/channels/211786369951989762/453662800460644354/"
 	},
 
-	"environment": "server",
+	"environment": "*",
 
 	"entrypoints": {
 		"main": [
@@ -29,7 +30,13 @@
 	],
 
 	"depends": {
-		"minecraft": ">=1.20.2",
-		"fabric-networking-api-v1": ">=3.0.8"
+		"minecraft": ">=1.20.5-rc.1",
+		"fabric-networking-api-v1": ">=4.0.7",
+		"malilib": ">=0.19.0-rc1"
+	},
+	"custom": {
+		"modmenu": {
+			"parent": "malilib"
+		}
 	}
 }

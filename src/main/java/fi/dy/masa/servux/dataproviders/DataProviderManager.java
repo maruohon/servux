@@ -8,8 +8,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.server.MinecraftServer;
-import fi.dy.masa.servux.network.IPluginChannelHandler;
-import fi.dy.masa.servux.network.ServerPacketChannelHandler;
+import fi.dy.masa.malilib.network.server.IPluginServerPlayHandler;
+import fi.dy.masa.malilib.network.server.ServerPlayHandler;
+import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.servux.util.JsonUtils;
 
 public class DataProviderManager
@@ -24,6 +25,7 @@ public class DataProviderManager
     {
         return this.providersImmutable;
     }
+    protected File configDir = null;
 
     /**
      * Registers the given data provider, if it's not already registered
@@ -38,7 +40,8 @@ public class DataProviderManager
         {
             this.providers.put(name, provider);
             this.providersImmutable = ImmutableList.copyOf(this.providers.values());
-            //System.out.printf("registerDataProvider: %s\n", provider);
+            //Servux.logger.info("registerDataProvider: {}", provider);
+
             return true;
         }
 
@@ -58,8 +61,9 @@ public class DataProviderManager
 
         if (enabled || wasEnabled != enabled)
         {
-            //System.out.printf("setProviderEnabled: %s (%s)\n", enabled, provider);
+            //Servux.logger.info("setProviderEnabled: {} ({})", enabled, provider);
             provider.setEnabled(enabled);
+
             this.updatePacketHandlerRegistration(provider);
 
             if (enabled && provider.shouldTick() && this.providersTicking.contains(provider) == false)
@@ -101,15 +105,17 @@ public class DataProviderManager
 
     protected void updatePacketHandlerRegistration(IDataProvider provider)
     {
-        IPluginChannelHandler handler = provider.getPacketHandler();
+        IPluginServerPlayHandler<?> handler = provider.getPacketHandler();
 
         if (provider.isEnabled())
         {
-            ServerPacketChannelHandler.INSTANCE.registerServerChannelHandler(handler);
+            ServerPlayHandler.getInstance().registerServerPlayHandler(handler);
+            handler.registerPlayHandler(provider.getPayload());
         }
         else
         {
-            ServerPacketChannelHandler.INSTANCE.unregisterServerChannelHandler(handler);
+            handler.unregisterPlayHandler(provider.getPayload());
+            ServerPlayHandler.getInstance().unregisterServerPlayHandler(handler);
         }
     }
 
@@ -154,6 +160,10 @@ public class DataProviderManager
 
     protected File getConfigFile()
     {
-        return new File("servux.json");
+        if (this.configDir == null)
+        {
+            this.configDir = FileUtils.getConfigDirectory();
+        }
+        return new File(this.configDir, "servux.json");
     }
 }

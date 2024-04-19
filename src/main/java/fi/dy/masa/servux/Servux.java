@@ -1,10 +1,9 @@
 package fi.dy.masa.servux;
 
+import net.fabricmc.api.ModInitializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import fi.dy.masa.servux.dataproviders.DataProviderManager;
-import fi.dy.masa.servux.dataproviders.StructureDataProvider;
-import net.fabricmc.api.ModInitializer;
+import fi.dy.masa.malilib.event.InitializationHandler;
 
 public class Servux implements ModInitializer
 {
@@ -13,8 +12,7 @@ public class Servux implements ModInitializer
     @Override
     public void onInitialize()
     {
-        DataProviderManager.INSTANCE.registerDataProvider(StructureDataProvider.INSTANCE);
-        DataProviderManager.INSTANCE.readFromConfig();
+        InitializationHandler.getInstance().registerInitializationHandler(new InitHandler());
     }
 
     public static String getModVersionString(String modId)
