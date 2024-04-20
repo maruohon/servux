@@ -8,9 +8,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.server.MinecraftServer;
-import fi.dy.masa.malilib.network.server.IPluginServerPlayHandler;
-import fi.dy.masa.malilib.network.server.ServerPlayHandler;
-import fi.dy.masa.malilib.util.FileUtils;
+import fi.dy.masa.servux.Reference;
 import fi.dy.masa.servux.util.JsonUtils;
 
 public class DataProviderManager
@@ -63,7 +61,6 @@ public class DataProviderManager
         {
             //Servux.logger.info("setProviderEnabled: {} ({})", enabled, provider);
             provider.setEnabled(enabled);
-
             this.updatePacketHandlerRegistration(provider);
 
             if (enabled && provider.shouldTick() && this.providersTicking.contains(provider) == false)
@@ -105,17 +102,15 @@ public class DataProviderManager
 
     protected void updatePacketHandlerRegistration(IDataProvider provider)
     {
-        IPluginServerPlayHandler<?> handler = provider.getPacketHandler();
-
         if (provider.isEnabled())
         {
-            ServerPlayHandler.getInstance().registerServerPlayHandler(handler);
-            handler.registerPlayHandler(provider.getPayload());
+            provider.registerHandler();
+            provider.getPacketHandler().registerPlayHandler(provider.getNetworkChannel());
         }
         else
         {
-            handler.unregisterPlayHandler(provider.getPayload());
-            ServerPlayHandler.getInstance().unregisterServerPlayHandler(handler);
+            provider.getPacketHandler().unregisterPlayHandler(provider.getNetworkChannel());
+            provider.unregisterHandler();
         }
     }
 
@@ -162,7 +157,7 @@ public class DataProviderManager
     {
         if (this.configDir == null)
         {
-            this.configDir = FileUtils.getConfigDirectory();
+            this.configDir = Reference.DEFAULT_CONFIG_DIR;
         }
         return new File(this.configDir, "servux.json");
     }

@@ -3,7 +3,12 @@ package fi.dy.masa.servux;
 import net.fabricmc.api.ModInitializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import fi.dy.masa.malilib.event.InitializationHandler;
+import fi.dy.masa.servux.dataproviders.DataProviderManager;
+import fi.dy.masa.servux.dataproviders.StructureDataProvider;
+import fi.dy.masa.servux.event.PlayerHandler;
+import fi.dy.masa.servux.event.PlayerListener;
+import fi.dy.masa.servux.event.ServerHandler;
+import fi.dy.masa.servux.event.ServerListener;
 
 public class Servux implements ModInitializer
 {
@@ -12,19 +17,12 @@ public class Servux implements ModInitializer
     @Override
     public void onInitialize()
     {
-        InitializationHandler.getInstance().registerInitializationHandler(new InitHandler());
-    }
+        DataProviderManager.INSTANCE.registerDataProvider(StructureDataProvider.INSTANCE);
 
-    public static String getModVersionString(String modId)
-    {
-        for (net.fabricmc.loader.api.ModContainer container : net.fabricmc.loader.api.FabricLoader.getInstance().getAllMods())
-        {
-            if (container.getMetadata().getId().equals(modId))
-            {
-                return container.getMetadata().getVersion().getFriendlyString();
-            }
-        }
+        ServerListener serverListener = new ServerListener();
+        ServerHandler.getInstance().registerServerHandler(serverListener);
 
-        return "?";
+        PlayerListener playerListener = new PlayerListener();
+        PlayerHandler.getInstance().registerPlayerHandler(playerListener);
     }
 }
