@@ -1,8 +1,14 @@
 package fi.dy.masa.servux.network.server;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Objects;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
@@ -16,6 +22,13 @@ import net.minecraft.util.Identifier;
  */
 public interface IPluginServerPlayHandler<T extends CustomPayload> extends ServerPlayNetworking.PlayPayloadHandler<T>
 {
+    int FROM_SERVER = 1;
+    int TO_SERVER = 2;
+    int BOTH_SERVER = 3;
+    int TO_CLIENT = 4;
+    int FROM_CLIENT = 5;
+    int BOTH_CLIENT = 6;
+
     /**
      * Returns your HANDLER's CHANNEL ID
      * @return (Channel ID)
@@ -43,13 +56,44 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
 
     /**
      * Register your Payload with Fabric API.
-     * This is called immediately upon HANDLER registration.
      * See the fabric-networking-api-v1 Java Docs under PayloadTypeRegistry -> register()
      * for more information on how to do this.
      * -
      * @param channel (Your Channel ID)
+     * @param direction (Payload Direction)
+     * @param id (Your Payload Id<T>)
+     * @param codec (Your Payload's CODEC)
      */
-    default void registerPlayPayload(Identifier channel) {}
+    default void registerPlayPayload(Identifier channel, int direction,
+                                     @Nonnull CustomPayload.Id<T> id, @Nonnull PacketCodec<? super RegistryByteBuf,T> codec)
+    {
+        if (channel.equals(this.getPayloadChannel()) && this.isPlayRegistered(this.getPayloadChannel()) == false)
+        {
+            try
+            {
+                switch (direction)
+                {
+                    case TO_SERVER, FROM_CLIENT -> PayloadTypeRegistry.playC2S().register(id, codec);
+                    case FROM_SERVER, TO_CLIENT -> PayloadTypeRegistry.playS2C().register(id, codec);
+                    default ->
+                    {
+                        PayloadTypeRegistry.playC2S().register(id, codec);
+                        PayloadTypeRegistry.playS2C().register(id, codec);
+                    }
+                }
+            }
+            catch (IllegalArgumentException e)
+            {
+                throw new IllegalArgumentException("registerPlayPayload: Channel ID "+ channel +" is already registered");
+            }
+
+            this.setPlayRegistered(channel);
+        }
+        else
+        {
+            throw new IllegalArgumentException("registerPlayPayload: Channel ID "+ channel +" is invalid, or it is already registered");
+        }
+    }
 
     /**
      * Register your Packet Receiver function.
@@ -58,8 +102,29 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
      * for more information on how to do this.
      * -
      * @param channel (Your Channel ID)
+     * @param id (Your Payload Id<T>)
+     * @param receiver (Your Packet Receiver // if null, uses this::receivePlayPayload)
+     * @return (True / False)
      */
-    default void registerPlayHandler(Identifier channel) {}
+    default boolean registerPlayReceiver(Identifier channel,
+                                         @Nonnull CustomPayload.Id<T> id, @Nullable ServerPlayNetworking.PlayPayloadHandler<T> receiver)
+    {
+        if (channel.equals(this.getPayloadChannel()) && this.isPlayRegistered(this.getPayloadChannel()))
+        {
+            try
+            {
+                return ServerPlayNetworking.registerGlobalReceiver(id, Objects.requireNonNullElse(receiver, this::receivePlayPayload));
+            }
+            catch (IllegalArgumentException e)
+            {
+                throw new IllegalArgumentException("registerPlayReceiver: Channel ID " + channel + " payload has not been registered");
+            }
+        }
+        else
+        {
+            throw new IllegalArgumentException("registerPlayReceiver: Channel ID "+ channel +" is invalid, or not registered");
+        }
+    }
 
     /**
      * Unregisters your Packet Receiver function.
@@ -69,16 +134,21 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
      * -
      * @param channel (Your Channel ID)
      */
-    default void unregisterPlayHandler(Identifier channel) {}
+    default void unregisterPlayReceiver(Identifier channel)
+    {
+        if (channel.equals(this.getPayloadChannel()))
+        {
+            ServerPlayNetworking.unregisterGlobalReceiver(channel);
+        }
+    }
 
     /**
      * Receive Payload by pointing static receive() method to this to convert Payload to its data decode() function.
      * -
      * @param payload (Payload to decode)
      * @param ctx (Fabric Context)
-     * @param <P> (Payload Param)
      */
-    default <P extends CustomPayload> void receivePlayPayload(P payload, ServerPlayNetworking.Context ctx) {}
+    default void receivePlayPayload(T payload, ServerPlayNetworking.Context ctx) {}
 
     /**
      * Receive Payload via the legacy "onCustomPayload" from a Network Handler Mixin interface.
@@ -86,9 +156,8 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
      * @param payload (Payload to decode)
      * @param handler (Network Handler that received the data)
      * @param ci (Callbackinfo for sending ci.cancel(), if wanted)
-     * @param <P> (Payload Param)
      */
-    default <P extends CustomPayload> void receivePlayPayload(P payload, ServerPlayNetworkHandler handler, CallbackInfo ci) {}
+    default void receivePlayPayload(T payload, ServerPlayNetworkHandler handler, CallbackInfo ci) {}
 
     /**
      * Payload Decoder wrapper function.
@@ -102,7 +171,11 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
      */
     default void decodeNbtCompound(Identifier channel, ServerPlayerEntity player, NbtCompound data) {}
     default void decodeByteBuf(Identifier channel, ServerPlayerEntity player, ServuxBuf data) {}
-    default void decodeObjects(Identifier channel, ServerPlayerEntity player, Object... args) {}
+    default <D> void decodeObject(Identifier channel, ServerPlayerEntity player, D data1) {}
+    default <D, E> void decodeObject(Identifier channel, ServerPlayerEntity player, D data1, E data2) {}
+    default <D, E, F> void decodeObject(Identifier channel, ServerPlayerEntity player, D data1, E data2, F data3) {}
+    default <D, E, F, G> void decodeObject(Identifier channel, ServerPlayerEntity player, D data1, E data2, F data3, G data4) {}
+    default <D, E, F, G, H> void decodeObject(Identifier channel, ServerPlayerEntity player, D data1, E data2, F data3, G data4, H data5) {}
 
     /**
      * Payload Encoder wrapper function.
@@ -113,16 +186,19 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
      */
     default void encodeNbtCompound(ServerPlayerEntity player, NbtCompound data) {}
     default void encodeByteBuf(ServerPlayerEntity player, ServuxBuf data) {}
-    default void encodeObjects(ServerPlayerEntity player, Object... args) {}
+    default <D> void encodeObject(ServerPlayerEntity player, D data1) {}
+    default <D, E> void encodeObject(ServerPlayerEntity player, D data1, E data2) {}
+    default <D, E, F> void encodeObject(ServerPlayerEntity player, D data1, E data2, F data3) {}
+    default <D, E, F, G> void encodeObject(ServerPlayerEntity player, D data1, E data2, F data3, G data4) {}
+    default <D, E, F, G, H> void encodeObject(ServerPlayerEntity player, D data1, E data2, F data3, G data4, H data5) {}
 
     /**
      * Sends the Payload to the player using the Fabric-API interface.
      * -
      * @param player (Player to send the data to)
      * @param payload (The Payload to send)
-     * @param <P> (Payload Param)
      */
-    default <P extends CustomPayload> void sendPlayPayload(ServerPlayerEntity player, P payload)
+    default void sendPlayPayload(ServerPlayerEntity player, T payload)
     {
         if (payload.getId().id().equals(this.getPayloadChannel()) && this.isPlayRegistered(this.getPayloadChannel()) &&
                 ServerPlayNetworking.canSend(player, payload.getId()))
@@ -135,9 +211,8 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
      * Sends the Payload to the player using the ServerPlayNetworkHandler interface.
      * @param handler (ServerPlayNetworkHandler)
      * @param payload (The Payload to send)
-     * @param <P> (Payload Param)
      */
-    default <P extends CustomPayload> void sendPlayPayload(ServerPlayNetworkHandler handler, P payload)
+    default void sendPlayPayload(ServerPlayNetworkHandler handler, T payload)
     {
         if (payload.getId().id().equals(this.getPayloadChannel()) && this.isPlayRegistered(this.getPayloadChannel()))
         {
