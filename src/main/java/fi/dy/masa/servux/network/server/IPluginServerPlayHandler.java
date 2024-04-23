@@ -47,13 +47,13 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
      * Sets your HANDLER as registered.
      * @param channel (Your Channel ID)
      */
-    default void setPlayRegistered(Identifier channel) {}
+    void setPlayRegistered(Identifier channel);
 
     /**
      * Send your HANDLER a global reset() event, such as when the server is shutting down.
      * @param channel (Your Channel ID)
      */
-    default void reset(Identifier channel) {}
+    void reset(Identifier channel);
 
     /**
      * Register your Payload with Fabric API.
@@ -87,6 +87,7 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
             }
 
             this.setPlayRegistered(this.getPayloadChannel());
+            return;
         }
 
         Servux.logger.error("registerPlayPayload: channel ID [{}] is invalid, or it is already registered", this.getPayloadChannel());
@@ -132,12 +133,12 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
     }
 
     /**
-     * Receive Payload by pointing the receive() method to this to convert Payload to its data decode() function.
+     * Receive Payload by pointing static receive() method to this to convert Payload to its data decode() function.
      * -
      * @param payload (Payload to decode)
      * @param ctx (Fabric Context)
      */
-    default void receivePlayPayload(T payload, ServerPlayNetworking.Context ctx) {}
+    void receivePlayPayload(T payload, ServerPlayNetworking.Context ctx);
 
     /**
      * Receive Payload via the legacy "onCustomPayload" from a Network Handler Mixin interface.
@@ -150,7 +151,7 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
 
     /**
      * Payload Decoder wrapper function.
-     * Implements how the data is processed after being decoded from the receivePlayPayload().
+     * Implements how the data is processed after being decoded from the receivePayload().
      * You can ignore these and implement your own helper class/methods.
      * These are provided as an example, and can be used in your HANDLER directly.
      * -
@@ -168,7 +169,7 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
 
     /**
      * Payload Encoder wrapper function.
-     * Implements how to encode() your Payload, then forward complete Payload to sendPlayPayload().
+     * Implements how to encode() your Payload, then forward complete Payload to sendPayload().
      * -
      * @param player (Player to send the data to)
      * @param data (Data Codec)
@@ -190,7 +191,7 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
     default void sendPlayPayload(ServerPlayerEntity player, T payload)
     {
         if (payload.getId().id().equals(this.getPayloadChannel()) && this.isPlayRegistered(this.getPayloadChannel()) &&
-            ServerPlayNetworking.canSend(player, payload.getId()))
+                ServerPlayNetworking.canSend(player, payload.getId()))
         {
             ServerPlayNetworking.send(player, payload);
         }
