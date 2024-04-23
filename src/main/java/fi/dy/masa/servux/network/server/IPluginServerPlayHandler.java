@@ -132,7 +132,7 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
     }
 
     /**
-     * Receive Payload by pointing static receive() method to this to convert Payload to its data decode() function.
+     * Receive Payload by pointing the receive() method to this to convert Payload to its data decode() function.
      * -
      * @param payload (Payload to decode)
      * @param ctx (Fabric Context)
@@ -150,7 +150,7 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
 
     /**
      * Payload Decoder wrapper function.
-     * Implements how the data is processed after being decoded from the receivePayload().
+     * Implements how the data is processed after being decoded from the receivePlayPayload().
      * You can ignore these and implement your own helper class/methods.
      * These are provided as an example, and can be used in your HANDLER directly.
      * -
@@ -168,7 +168,7 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
 
     /**
      * Payload Encoder wrapper function.
-     * Implements how to encode() your Payload, then forward complete Payload to sendPayload().
+     * Implements how to encode() your Payload, then forward complete Payload to sendPlayPayload().
      * -
      * @param player (Player to send the data to)
      * @param data (Data Codec)
@@ -190,7 +190,7 @@ public interface IPluginServerPlayHandler<T extends CustomPayload> extends Serve
     default void sendPlayPayload(ServerPlayerEntity player, T payload)
     {
         if (payload.getId().id().equals(this.getPayloadChannel()) && this.isPlayRegistered(this.getPayloadChannel()) &&
-                ServerPlayNetworking.canSend(player, payload.getId()))
+            ServerPlayNetworking.canSend(player, payload.getId()))
         {
             ServerPlayNetworking.send(player, payload);
         }
