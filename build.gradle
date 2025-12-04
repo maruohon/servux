@@ -1,61 +1,77 @@
-
 buildscript {
-    repositories {
-        maven { url = 'https://files.minecraftforge.net/maven' }
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
-        classpath group: 'org.spongepowered', name: 'mixingradle', version: '0.7-SNAPSHOT'
-    }
+	repositories {
+		// These repositories are only for Gradle plugins, put any other repositories in the repository block further below
+		maven { url = 'https://maven.minecraftforge.net' }
+		mavenCentral()
+	}
+	dependencies {
+		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+	}
 }
 
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'org.spongepowered.mixin'
-apply plugin: 'java'
-
-repositories {
-    // gigaherz mappings
-    maven {
-        url 'https://www.dogforce-games.com/maven/'
-    }
+plugins {
+	id 'net.minecraftforge.gradle' version '5.1+'
+	//id 'net.minecraftforge.gradle'
+	id 'java'
+	id 'org.spongepowered.mixin' version '0.7.+'
 }
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+//apply plugin: 'net.minecraftforge.gradle'
+//apply plugin: 'java'
+//classpath group: 'org.spongepowered', name: 'mixingradle', version: '0.7-SNAPSHOT'
+//apply from: 'https://raw.githubusercontent.com/SizableShrimp/Forge-Class-Remapper/main/classremapper.gradle'
+//apply plugin: 'org.spongepowered.mixin', version: '0.7.+'
+//apply plugin: 'org.spongepowered.mixin'
 
-ext.configFile = file "build.properties"
 
-configFile.withReader {
-    def prop = new Properties()
-    prop.load(it)
-    project.ext.config = new ConfigSlurper().parse prop
-}
+// Mojang ships Java 17 to end users in 1.18+ instead of Java 8 in 1.16 or lower, so your mod should target Java 17.
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+//sourceCompatibility = JavaVersion.VERSION_17
+//targetCompatibility = JavaVersion.VERSION_17
+
+println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 
 minecraft {
-    mappings channel: "${config.mappings_channel}", version: "${config.mappings_version}"
+	mappings channel: "${project.mappings_channel}", version: "${project.mappings_version}"
 
-    //makeObfSourceJar = false
+	//makeObfSourceJar = false
 
-    ext.mod_version = config.mod_version
+	ext.mod_version = project.mod_version
 
-    if (mod_version.endsWith('-dev')) {
-        mod_version = mod_version + "." + new Date().format('yyyyMMdd.HHmmss')
-    }
+	if (mod_version.endsWith('-dev')) {
+		mod_version = mod_version + "." + new Date().format('yyyyMMdd.HHmmss')
+	}
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:' + config.minecraft_version + '-' + config.forge_version
+	minecraft 'net.minecraftforge:forge:' + project.minecraft_version + '-' + project.forge_version
+
+	// Apply Mixin AP
+	annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+mixin {
+	// MixinGradle Settings
+	add sourceSets.main, 'mixins.' + project.mod_id + '.refmap.json'
+	config 'mixins.' + project.mod_id + '.json'
 }
 
 compileJava {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-    options.encoding = 'UTF-8'
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+	options.encoding = 'UTF-8'
 }
 
-group = config.group + "." + config.mod_id // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = config.mod_file_name + '-' + config.minecraft_version_out
+/*
+sourceSets {
+	main {
+		ext.refMap = 'mixins.' + project.mod_id + '.refmap.json'
+	}
+}
+*/
+
+group = project.group + "." + project.mod_id // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = project.mod_file_name + '-' + project.minecraft_version_out
 version = project.minecraft.mod_version
 
 /**
@@ -64,34 +80,39 @@ version = project.minecraft.mod_version
  * include your own file from resources, simply remove the line below.
  */
 jar {
-    // Don't append a 'mod-' filename prefix >_>
-    baseName = archivesBaseName
-
-    manifest {
-        attributes([
-            "Specification-Title": "${config.mod_id}",
-            "Specification-Vendor": "${config.author}",
-            "Specification-Version": "1", // We are version 1 of ourselves
-            "Implementation-Title": "${config.mod_name}",
-            "Implementation-Version": "${config.mod_version}",
-            "Implementation-Vendor": "${config.author}",
-            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-            "MixinConfigs": "mixins." + config.mod_id + ".json"
-        ])
-    }
+	manifest {
+		attributes([
+			"Specification-Title": "${project.mod_id}",
+			"Specification-Vendor": "${project.author}",
+			"Specification-Version": "1", // We are version 1 of ourselves
+			"Implementation-Title": "${project.mod_name}",
+			"Implementation-Version": project.jar.archiveVersion, //"${project.mod_version}",
+			"Implementation-Vendor": "${project.author}",
+			"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+		])
+	}
 }
 
+/*
 mixin {
-    add sourceSets.main, 'mixins.' + config.mod_id + '.refmap.json'
+	defaultObfuscationEnv notch
+	add sourceSets.main, 'mixins.' + project.mod_id + '.refmap.json'
 }
+*/
+
+// Example configuration to allow publishing using the maven-publish plugin
+// This is the preferred method to reobfuscate your jar file
+jar.finalizedBy('reobfJar')
+// However if you are in a multi-project build, dev time needs unobfed jar files, so you can delay the obfuscation until publishing by doing
+// publish.dependsOn('reobfJar')
 
 processResources
 {
-    // Exclude the GIMP image files
-    exclude '**/*.xcf'
-    exclude '**/xcf'
+	// Exclude the GIMP image files
+	exclude '**/*.xcf'
+	exclude '**/xcf'
 
-    // this will ensure that this task is redone when the versions change.
-    inputs.property "mod_version", project.minecraft.mod_version
-    inputs.property "minecraft_version", project.config.minecraft_version
+	// this will ensure that this task is redone when the versions change.
+	inputs.property "mod_version", project.minecraft.mod_version
+	inputs.property "minecraft_version", project.minecraft_version
 }

@@ -8,7 +8,7 @@
 modLoader="javafml" #mandatory
 
 # A version range to match for said mod loader - for regular FML @Mod it will be the forge version
-loaderVersion="[33,)" #mandatory
+loaderVersion="[45,)" #mandatory
 
 # A URL to refer people to when problems occur with this mod
 issueTrackerURL="https://github.com/maruohon/servux/issues" #optional
@@ -21,19 +21,19 @@ license="LGPL-3.0"
 [[mods]] #mandatory
 
     # The modid of the mod
-    modId="servux" #mandatory
+    modId="abpt" #mandatory
 
     # The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
     version="${file.jarVersion}" #mandatory
 
     # A display name for the mod
-    displayName="Servux" #mandatory
+    displayName="Accurate Block Placement Temporary" #mandatory
 
     # A URL to query for updates for this mod. See the JSON update specification <here>
     #updateJSONURL="http://myurl.me/" #optional
 
     # A URL for the "homepage" for this mod, displayed in the mod UI
-    displayURL="https://www.curseforge.com/minecraft/mc-mods/servux" #optional
+    # displayURL="https://www.curseforge.com/minecraft/mc-mods/servux" #optional
 
     # A file name (in the root of the mod JAR) containing a logo for display
     #logoFile="examplemod.png" #optional
@@ -45,25 +45,25 @@ license="LGPL-3.0"
     authors="masa" #optional
 
     # The description text for the mod (multi line!) (#mandatory)
-    description='''Server-side support for masa's client-side mods'''
+    description='''Accurate Block Placement protocol v3 support for servers'''
 
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
-[[dependencies.servux]] #optional
+[[dependencies.abpt]] #optional
     # the modid of the dependency
     modId="forge" #mandatory
     # Does this dependency have to exist - if not, ordering below must be specified
     mandatory=true #mandatory
     # The version range of the dependency
-    versionRange="[33.0.21,)" #mandatory
+    versionRange="[45,)" #mandatory
     # An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory
     ordering="NONE"
     # Side this dependency is applied on - BOTH, CLIENT or SERVER
-    side="BOTH"
+    side="SERVER"
 
 # Here's another dependency
-[[dependencies.servux]]
+[[dependencies.abpt]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16.2,1.17)"
+    versionRange="[1.19,)"
     ordering="NONE"
     side="SERVER"
