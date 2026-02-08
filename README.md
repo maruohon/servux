@@ -1,3 +1,8 @@
+## Fork Notes (v1.0, MC 1.21.11)
+This is a fork of [Servux](https://github.com/maruohon/servux) with a Paper plugin added at `paper-plugin/` (Servux-Paper v1.0 for Minecraft 1.21.11).
+
+Edits maintained by lyntermint. Upstream README follows.
+
 Servux
 ==============
 Servux is a server-side mod that provides extra support/features for some client-side mods when playing on a server.

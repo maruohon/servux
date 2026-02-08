@@ -1,0 +1,25 @@
+structures:
+  enabled: true
+  updateIntervalTicks: 40
+  timeoutTicks: 600
+  permissionLevel: 0
+  whitelistEnabled: false
+  whitelist: []
+  blacklistEnabled: false
+  blacklist:
+    - minecraft:buried_treasure
+
+hud:
+  enabled: true
+  updateIntervalTicks: 40
+  permissionLevel: 0
+  shareWeatherStatus: false
+  weatherPermissionLevel: 0
+  shareSeed: false
+  seedPermissionLevel: 2
+  loggersEnabled: true
+  loggersEnabledList:
+    - tps
+    - mob_caps
+  loggerPermissionLevel: 0
+  loggerTickIntervalTicks: 15

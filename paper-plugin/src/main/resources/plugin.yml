@@ -1,0 +1,6 @@
+name: Servux-Paper
+version: ${version}
+main: com.servuxpaper.ServuxPaperPlugin
+api-version: '1.21'
+description: Servux-Paper implements the Servux protocol for MiniHUD (structures + HUD data) on Paper
+author: lyntermint
