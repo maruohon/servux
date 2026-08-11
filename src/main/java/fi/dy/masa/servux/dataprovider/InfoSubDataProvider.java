@@ -10,14 +10,6 @@ import javax.annotation.Nullable;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.PacketByteBuf;
 import fi.dy.masa.servux.network.ClientPacketHandler;
 import fi.dy.masa.servux.network.packet.InfoSubPacketHandler;
 import fi.dy.masa.servux.network.util.PacketUtils;
@@ -30,11 +22,20 @@ import fi.dy.masa.servux.util.data.TpsData;
 import fi.dy.masa.servux.util.palette.HashMapPalette;
 import fi.dy.masa.servux.util.palette.Palette;
 
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.WorldServer;
+
 public class InfoSubDataProvider extends BaseDataProvider
 {
     public static final InfoSubDataProvider INSTANCE = new InfoSubDataProvider();
 
-    protected final Int2ObjectOpenHashMap<BiConsumer<PacketByteBuf, ServerPlayerEntity>> dataWriters = new Int2ObjectOpenHashMap<>();
+    protected final Int2ObjectOpenHashMap<BiConsumer<PacketBuffer, EntityPlayerMP>> dataWriters = new Int2ObjectOpenHashMap<>();
     protected final HashMap<UUID, IntOpenHashSet> registeredChannels = new HashMap<>();
 
     protected final Int2ObjectOpenHashMap<PerDimensionObjectCounts> perDimensionCounts = new Int2ObjectOpenHashMap<>();
@@ -87,7 +88,7 @@ public class InfoSubDataProvider extends BaseDataProvider
             this.tpsData.update(server);
         }
 
-        for (ServerWorld world : server.worlds)
+        for (WorldServer world : server.worlds)
         {
             try
             {
@@ -107,20 +108,20 @@ public class InfoSubDataProvider extends BaseDataProvider
         }
     }
 
-    public void register(String channel, ServerPlayNetworkHandler netHandler)
+    public void register(String channel, NetHandlerPlayServer netHandler)
     {
         int id = this.channelIdPalette.getIdFor(channel);
 
         if (id >= 0)
         {
-            this.registeredChannels.computeIfAbsent(netHandler.player.getUuid(), (u) -> new IntOpenHashSet()).add(id);
+            this.registeredChannels.computeIfAbsent(netHandler.player.getUniqueID(), (u) -> new IntOpenHashSet()).add(id);
             this.setNeedsSubscriberCheck();
         }
     }
 
-    public void unregister(String channel, ServerPlayNetworkHandler netHandler)
+    public void unregister(String channel, NetHandlerPlayServer netHandler)
     {
-        UUID uuid = netHandler.player.getUuid();
+        UUID uuid = netHandler.player.getUniqueID();
         IntOpenHashSet set = this.registeredChannels.get(uuid);
         int id = this.channelIdPalette.getIdFor(channel);
 
@@ -143,12 +144,12 @@ public class InfoSubDataProvider extends BaseDataProvider
         this.setNeedsSubscriberCheck();
     }
 
-    public void sendMetadata(ServerPlayNetworkHandler netHandler)
+    public void sendMetadata(NetHandlerPlayServer netHandler)
     {
-        CompoundTag tag = new CompoundTag();
+        NBTTagCompound tag = new NBTTagCompound();
 
-        tag.putInt("version", this.getProtocolVersion());
-        tag.put("channel_ids", NbtUtils.asListTag(this.channelIdPalette.getMapping()));
+        tag.setInteger("version", this.getProtocolVersion());
+        tag.setTag("channel_ids", NbtUtils.asListTag(this.channelIdPalette.getMapping()));
 
         PacketUtils.sendPacketTypeAndCompound(InfoSubPacketHandler.REG_CHANNEL,
                                               InfoSubPacketHandler.PACKET_S2C_METADATA,
@@ -181,7 +182,7 @@ public class InfoSubDataProvider extends BaseDataProvider
     {
         for (UUID uuid : this.registeredChannels.keySet())
         {
-            ServerPlayerEntity player = server.getPlayerManager().getPlayer(uuid);
+            EntityPlayerMP player = server.getPlayerList().getPlayerByUUID(uuid);
 
             if (player != null)
             {
@@ -194,9 +195,9 @@ public class InfoSubDataProvider extends BaseDataProvider
         }
     }
 
-    protected void sendUpdateToPlayer(ServerPlayerEntity player, IntOpenHashSet channelIds)
+    protected void sendUpdateToPlayer(EntityPlayerMP player, IntOpenHashSet channelIds)
     {
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
         buf.writeVarInt(channelIds.size());
 
         for (int channelId : channelIds)
@@ -204,12 +205,12 @@ public class InfoSubDataProvider extends BaseDataProvider
             this.addDataForChannel(channelId, buf, player);
         }
 
-        PacketUtils.send(InfoSubPacketHandler.DATA_CHANNEL, buf, player.networkHandler);
+        PacketUtils.send(InfoSubPacketHandler.DATA_CHANNEL, buf, player.connection);
     }
 
-    protected void addDataForChannel(int channelId, PacketByteBuf buf, ServerPlayerEntity player)
+    protected void addDataForChannel(int channelId, PacketBuffer buf, EntityPlayerMP player)
     {
-        BiConsumer<PacketByteBuf, ServerPlayerEntity> dataWriter = this.dataWriters.get(channelId);
+        BiConsumer<PacketBuffer, EntityPlayerMP> dataWriter = this.dataWriters.get(channelId);
 
         buf.writeVarInt(channelId);
 
@@ -273,7 +274,7 @@ public class InfoSubDataProvider extends BaseDataProvider
             this.mobCapsPerDimension.put(dimension.intValue(), new MobCaps());
         }
 
-        for (SpawnGroup group : MobCaps.ENTITY_CATEGORIES)
+        for (EnumCreatureType group : MobCaps.ENTITY_CATEGORIES)
         {
             String groupName = group.name().toLowerCase(Locale.ROOT);
 

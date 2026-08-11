@@ -6,48 +6,49 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import com.google.common.collect.ImmutableSet;
-import net.minecraft.block.BannerBlock;
-import net.minecraft.block.BedBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.CakeBlock;
-import net.minecraft.block.ComparatorBlock;
-import net.minecraft.block.DoorBlock;
-import net.minecraft.block.FenceGateBlock;
-import net.minecraft.block.LeavesBlock;
-import net.minecraft.block.LeverBlock;
-import net.minecraft.block.PillarBlock;
-import net.minecraft.block.RepeaterBlock;
-import net.minecraft.block.SignBlock;
-import net.minecraft.block.SkullBlock;
-import net.minecraft.block.SlabBlock;
-import net.minecraft.block.StairsBlock;
-import net.minecraft.block.TrapdoorBlock;
-import net.minecraft.block.WallSignBlock;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.state.property.DirectionProperty;
-import net.minecraft.state.property.Property;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
 import fi.dy.masa.servux.Servux;
 import fi.dy.masa.servux.config.Configs;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockBanner;
+import net.minecraft.block.BlockBed;
+import net.minecraft.block.BlockCake;
+import net.minecraft.block.BlockDoor;
+import net.minecraft.block.BlockFenceGate;
+import net.minecraft.block.BlockLeaves;
+import net.minecraft.block.BlockLever;
+import net.minecraft.block.BlockRedstoneComparator;
+import net.minecraft.block.BlockRedstoneRepeater;
+import net.minecraft.block.BlockRotatedPillar;
+import net.minecraft.block.BlockSkull;
+import net.minecraft.block.BlockSlab;
+import net.minecraft.block.BlockStairs;
+import net.minecraft.block.BlockStandingSign;
+import net.minecraft.block.BlockTrapDoor;
+import net.minecraft.block.BlockWallSign;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+
 public class PlacementHandler
 {
-    public static final ImmutableSet<Property<?>> WHITELISTED_PROPERTIES = ImmutableSet.of(
+    public static final ImmutableSet<IProperty<?>> WHITELISTED_PROPERTIES = ImmutableSet.of(
             // BooleanProperty:
             // INVERTED - DaylightDetector
             // OPEN - Barrel, Door, FenceGate, Trapdoor
             // PERSISTENT - Leaves
-            DoorBlock.OPEN,
-            FenceGateBlock.OPEN,
-            TrapdoorBlock.OPEN,
-            LeavesBlock.DECAYABLE,
-            LeavesBlock.CHECK_DECAY,
+            BlockDoor.OPEN,
+            BlockFenceGate.OPEN,
+            BlockTrapDoor.OPEN,
+            BlockLeaves.DECAYABLE,
+            BlockLeaves.CHECK_DECAY,
             // EnumProperty:
             // AXIS - Pillar
             // BLOCK_HALF - Stairs, Trapdoor
@@ -57,30 +58,30 @@ public class PlacementHandler
             // SLAB_TYPE - Slab - PARTIAL ONLY: TOP and BOTTOM, not DOUBLE
             // STAIR_SHAPE - Stairs (needed to get the correct state, otherwise the player facing would be a factor)
             // WALL_MOUNT_LOCATION - Button, Grindstone, Lever
-            PillarBlock.AXIS,
-            StairsBlock.HALF,
-            TrapdoorBlock.field_24932,
-            StairsBlock.SHAPE,
-            ComparatorBlock.MODE,
-            DoorBlock.HINGE,
-            SlabBlock.HALF,
-            LeverBlock.FACING,
+            BlockRotatedPillar.AXIS,
+            BlockStairs.HALF,
+            BlockTrapDoor.HALF,
+            BlockStairs.SHAPE,
+            BlockRedstoneComparator.MODE,
+            BlockDoor.HINGE,
+            BlockSlab.HALF,
+            BlockLever.FACING,
             // IntProperty:
             // BITES - Cake
             // DELAY - Repeater
             // NOTE - NoteBlock
             // ROTATION - Banner, Sign, Skull
-            CakeBlock.BITES,
-            RepeaterBlock.DELAY,
-            BannerBlock.FACING,
-            BannerBlock.ROTATION,
-            SignBlock.ROTATION,
-            WallSignBlock.FACING,
-            SkullBlock.FACING
+            BlockCake.BITES,
+            BlockRedstoneRepeater.DELAY,
+            BlockBanner.FACING,
+            BlockBanner.ROTATION,
+            BlockStandingSign.ROTATION,
+            BlockWallSign.FACING,
+            BlockSkull.FACING
     );
 
     @Nullable
-    public static BlockState applyPlacementProtocolToPlacementState(BlockState state, UseContext context)
+    public static IBlockState applyPlacementProtocolToPlacementState(IBlockState state, UseContext context)
     {
         if (Configs.Generic.PLACEMENT_PROTOCOL_V3.getBooleanValue())
         {
@@ -92,7 +93,7 @@ public class PlacementHandler
         }
     }
 
-    public static BlockState applyPlacementProtocolV2(BlockState state, UseContext context)
+    public static IBlockState applyPlacementProtocolV2(IBlockState state, UseContext context)
     {
         int protocolValue = (int) context.getHitVec().x - 2;
 
@@ -102,7 +103,7 @@ public class PlacementHandler
             return state;
         }
 
-        Optional<DirectionProperty> propertyOpt = BlockUtils.getFirstDirectionProperty(state);
+        Optional<PropertyDirection> propertyOpt = BlockUtils.getFirstDirectionProperty(state);
 
         if (propertyOpt.isPresent())
         {
@@ -120,33 +121,33 @@ public class PlacementHandler
         {
             Block block = state.getBlock();
 
-            if (block instanceof RepeaterBlock)
+            if (block instanceof BlockRedstoneRepeater)
             {
                 Integer delay = (protocolValue / 16) + 1;
 
-                if (RepeaterBlock.DELAY.getValues().contains(delay))
+                if (BlockRedstoneRepeater.DELAY.getAllowedValues().contains(delay))
                 {
-                    state = state.with(RepeaterBlock.DELAY, delay);
+                    state = state.withProperty(BlockRedstoneRepeater.DELAY, delay);
                 }
             }
-            else if (block instanceof ComparatorBlock)
+            else if (block instanceof BlockRedstoneComparator)
             {
-                state = state.with(ComparatorBlock.MODE, ComparatorBlock.ComparatorMode.SUBTRACT);
+                state = state.withProperty(BlockRedstoneComparator.MODE, BlockRedstoneComparator.Mode.SUBTRACT);
             }
-            else if (block instanceof TrapdoorBlock)
+            else if (block instanceof BlockTrapDoor)
             {
-                state = state.with(TrapdoorBlock.field_24932, TrapdoorBlock.Side.TOP);
+                state = state.withProperty(BlockTrapDoor.HALF, BlockTrapDoor.DoorHalf.TOP);
             }
-            else if (block instanceof StairsBlock && state.get(StairsBlock.HALF) == StairsBlock.BlockHalf.BOTTOM)
+            else if (block instanceof BlockStairs && state.getValue(BlockStairs.HALF) == BlockStairs.EnumHalf.BOTTOM)
             {
-                state = state.with(StairsBlock.HALF, StairsBlock.BlockHalf.TOP);
+                state = state.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.TOP);
             }
         }
 
         return state;
     }
 
-    public static <T extends Comparable<T>> BlockState applyPlacementProtocolV3(BlockState state, UseContext context)
+    public static <T extends Comparable<T>> IBlockState applyPlacementProtocolV3(IBlockState state, UseContext context)
     {
         int protocolValue = (int) context.getHitVec().x - 2;
         //System.out.printf("V3 raw protocolValue: 0x%08X, bx: %d, hx: %.3f\n", protocolValue, context.getPos().getX(), context.getHitVec().x);
@@ -156,7 +157,7 @@ public class PlacementHandler
             return state;
         }
 
-        Optional<DirectionProperty> propertyOpt = BlockUtils.getFirstDirectionProperty(state);
+        Optional<PropertyDirection> propertyOpt = BlockUtils.getFirstDirectionProperty(state);
 
         // DirectionProperty - allow all except: VERTICAL_DIRECTION (PointedDripstone)
         if (propertyOpt.isPresent())// && property != Properties.VERTICAL_DIRECTION)
@@ -176,19 +177,19 @@ public class PlacementHandler
         // Consume the lowest unused bit
         protocolValue >>>= 1;
 
-        List<Property<?>> propList = new ArrayList<>(state.getBlock().getStateManager().getProperties());
-        propList.sort(Comparator.comparing(Property::getName));
+        List<IProperty<?>> propList = new ArrayList<>(state.getBlock().getBlockState().getProperties());
+        propList.sort(Comparator.comparing(IProperty::getName));
 
         try
         {
-            for (Property<?> p : propList)
+            for (IProperty<?> p : propList)
             {
-                if ((p instanceof DirectionProperty) == false &&
+                if ((p instanceof PropertyDirection) == false &&
                     WHITELISTED_PROPERTIES.contains(p))
                 {
                     @SuppressWarnings("unchecked")
-                    Property<T> prop = (Property<T>) p;
-                    List<T> list = new ArrayList<>(prop.getValues());
+                    IProperty<T> prop = (IProperty<T>) p;
+                    List<T> list = new ArrayList<>(prop.getAllowedValues());
                     list.sort(Comparable::compareTo);
 
                     int requiredBits = MathHelper.log2(MathHelper.smallestEncompassingPowerOfTwo(list.size()));
@@ -200,10 +201,10 @@ public class PlacementHandler
                     {
                         T value = list.get(valueIndex);
 
-                        if (state.get(prop).equals(value) == false)
+                        if (state.getValue(prop).equals(value) == false)
                         {
                             //System.out.printf("applying %s: %s\n", prop.getName(), value);
-                            state = state.with(prop, value);
+                            state = state.withProperty(prop, value);
                         }
 
                         protocolValue >>>= requiredBits;
@@ -219,11 +220,11 @@ public class PlacementHandler
         return state;
     }
 
-    private static BlockState applyDirectionProperty(BlockState state, UseContext context,
-                                                     DirectionProperty property, int protocolValue)
+    private static IBlockState applyDirectionProperty(IBlockState state, UseContext context,
+                                                      PropertyDirection property, int protocolValue)
     {
-        Direction facingOrig = state.get(property);
-        Direction facing = facingOrig;
+        EnumFacing facingOrig = state.getValue(property);
+        EnumFacing facing = facingOrig;
         int decodedFacingIndex = (protocolValue & 0x7);
 
         if (decodedFacingIndex == 6) // the opposite of the normal facing requested
@@ -232,9 +233,9 @@ public class PlacementHandler
         }
         else if (decodedFacingIndex >= 0 && decodedFacingIndex <= 5)
         {
-            facing = Direction.byId(decodedFacingIndex);
+            facing = EnumFacing.byIndex(decodedFacingIndex);
 
-            if (property.getValues().contains(facing) == false)
+            if (property.getAllowedValues().contains(facing) == false)
             {
                 facing = context.getEntity().getHorizontalFacing().getOpposite();
             }
@@ -242,20 +243,20 @@ public class PlacementHandler
 
         //System.out.printf("plop facing: %s -> %s (prot: %d, dec: %d)\n", facingOrig, facing, protocolValue, decodedFacingIndex);
 
-        if (facing != facingOrig && property.getValues().contains(facing))
+        if (facing != facingOrig && property.getAllowedValues().contains(facing))
         {
-            if (state.getBlock() instanceof BedBlock)
+            if (state.getBlock() instanceof BlockBed)
             {
                 BlockPos headPos = context.pos.offset(facing);
                 World world = context.getWorld();
 
-                if (world.getBlockState(headPos).getBlock().canReplace(world, headPos) == false)
+                if (world.getBlockState(headPos).getBlock().isReplaceable(world, headPos) == false)
                 {
                     return null;
                 }
             }
 
-            state = state.with(property, facing);
+            state = state.withProperty(property, facing);
         }
 
         return state;
@@ -265,12 +266,12 @@ public class PlacementHandler
     {
         private final World world;
         private final BlockPos pos;
-        private final Direction side;
+        private final EnumFacing side;
         private final Vec3d hitVec;
-        private final LivingEntity entity;
-        private final Hand hand;
+        private final EntityLivingBase entity;
+        private final EnumHand hand;
 
-        private UseContext(World world, BlockPos pos, Direction side, Vec3d hitVec, LivingEntity entity, Hand hand)
+        private UseContext(World world, BlockPos pos, EnumFacing side, Vec3d hitVec, EntityLivingBase entity, EnumHand hand)
         {
             this.world = world;
             this.pos = pos;
@@ -280,7 +281,7 @@ public class PlacementHandler
             this.hand = hand;
         }
 
-        public static UseContext of(World world, BlockPos pos, Direction side, Vec3d hitVec, LivingEntity entity, Hand hand)
+        public static UseContext of(World world, BlockPos pos, EnumFacing side, Vec3d hitVec, EntityLivingBase entity, EnumHand hand)
         {
             return new UseContext(world, pos, side, hitVec, entity, hand);
         }
@@ -304,7 +305,7 @@ public class PlacementHandler
             return this.pos;
         }
 
-        public Direction getSide()
+        public EnumFacing getSide()
         {
             return this.side;
         }
@@ -314,12 +315,12 @@ public class PlacementHandler
             return this.hitVec;
         }
 
-        public LivingEntity getEntity()
+        public EntityLivingBase getEntity()
         {
             return this.entity;
         }
 
-        public Hand getHand()
+        public EnumHand getHand()
         {
             return this.hand;
         }

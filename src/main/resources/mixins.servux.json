@@ -6,19 +6,18 @@
 	"mixins": [
 		"MinecraftServerMixin",
 		"infosub.ServerWorldMixin",
-		"network.CustomPayloadC2SPacketMixin",
-		"network.ServerPlayNetworkHandlerMixin",
-		"placement.BlockItemMixin",
-		"placement.DispenserBlockMixin",
-		"placement.FurnaceBlockMixin",
-		"placement.PistonBlockMixin",
-		"structure.EndChunkGeneratorMixin",
-		"structure.FlatChunkGeneratorMixin",
-		"structure.NetherChunkGeneratorMixin",
-		"structure.OverworldChunkGeneratorMixin",
-		"structure.PlayerChunkWatchingEntryMixin",
-		"structure.ServerChunkCacheMixin",
-		"structure.StructureFeatureMixin"
+		"network.NetHandlerPlayServerMixin",
+		"placement.BlockDispenserMixin",
+		"placement.BlockFurnaceMixin",
+		"placement.BlockPistonBaseMixin",
+		"placement.ItemBlockMixin",
+		"structure.ChunkGeneratorEndMixin",
+		"structure.ChunkGeneratorFlatMixin",
+		"structure.ChunkGeneratorHellMixin",
+		"structure.ChunkGeneratorOverworldMixin",
+		"structure.ChunkProviderServerMixin",
+		"structure.MapGenStructureMixin",
+		"structure.PlayerChunkMapEntryMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

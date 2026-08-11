@@ -4,19 +4,14 @@ pluginManagement {
 			name = 'Fabric'
 			url = 'https://maven.fabricmc.net/'
 		}
-		gradlePluginPortal()
 		maven {
-			name = 'Jitpack'
-			url = 'https://jitpack.io'
+			name = 'Ornithe Releases'
+			url = 'https://maven.ornithemc.net/releases'
 		}
-		jcenter()
-	}
-
-	resolutionStrategy {
-		eachPlugin {
-			if (requested.id.id == "fabric-loom" && requested.version?.endsWith("-SNAPSHOT") != true) {
-				useModule("com.github.Chocohead.Fabric-Loom:fabric-loom:${requested.version}")
-			}
+		maven {
+			name = 'Ornithe Snapshots'
+			url = 'https://maven.ornithemc.net/snapshots'
 		}
+		gradlePluginPortal()
 	}
 }

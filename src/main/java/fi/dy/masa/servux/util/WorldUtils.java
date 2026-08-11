@@ -6,6 +6,6 @@ public class WorldUtils
 {
     public static int getDimensionId(World world)
     {
-        return world.dimension.getType().getRawId();
+        return world.provider.getDimensionType().getId();
     }
 }

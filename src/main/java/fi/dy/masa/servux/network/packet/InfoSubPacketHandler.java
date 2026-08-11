@@ -1,18 +1,19 @@
 package fi.dy.masa.servux.network.packet;
 
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.PacketByteBuf;
 import fi.dy.masa.servux.dataprovider.InfoSubDataProvider;
 import fi.dy.masa.servux.network.BaseClientPacketHandler;
 import fi.dy.masa.servux.util.data.Constants;
 
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.ResourceLocation;
+
 public class InfoSubPacketHandler extends BaseClientPacketHandler
 {
-    public static final Identifier REG_CHANNEL = new Identifier("servux:info_reg");
-    public static final Identifier DATA_CHANNEL = new Identifier("servux:info_data");
+    public static final ResourceLocation REG_CHANNEL = new ResourceLocation("servux:info_reg");
+    public static final ResourceLocation DATA_CHANNEL = new ResourceLocation("servux:info_data");
 
     public static final InfoSubPacketHandler INSTANCE = new InfoSubPacketHandler();
 
@@ -24,20 +25,20 @@ public class InfoSubPacketHandler extends BaseClientPacketHandler
     }
 
     @Override
-    public Identifier getChannel()
+    public ResourceLocation getChannel()
     {
         return REG_CHANNEL;
     }
 
     @Override
-    public void onPacketReceived(PacketByteBuf buf, ServerPlayNetworkHandler netHandler)
+    public void onPacketReceived(PacketBuffer buf, NetHandlerPlayServer netHandler)
     {
-        CompoundTag tag = buf.readCompoundTag();
+        NBTTagCompound tag = buf.readCompoundTag();
         String action = tag.getString("action");
 
         if (action.equals("unregister_all"))
         {
-            InfoSubDataProvider.INSTANCE.unregisterAllChannels(netHandler.player.getUuid());
+            InfoSubDataProvider.INSTANCE.unregisterAllChannels(netHandler.player.getUniqueID());
         }
         else
         {
@@ -46,12 +47,12 @@ public class InfoSubPacketHandler extends BaseClientPacketHandler
 
             if (register || unregister)
             {
-                ListTag list = tag.getList("channels", Constants.NBT.TAG_COMPOUND);
-                final int size = list.size();
+                NBTTagList list = tag.getTagList("channels", Constants.NBT.TAG_COMPOUND);
+                final int size = list.tagCount();
 
                 for (int i = 0; i < size; ++i)
                 {
-                    CompoundTag channelTag = list.getCompound(i);
+                    NBTTagCompound channelTag = list.getCompoundTagAt(i);
                     String channel = channelTag.getString("channel");
 
                     if (register)

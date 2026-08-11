@@ -1,7 +1,9 @@
 package fi.dy.masa.servux.util.data;
 
-import net.minecraft.server.world.ServerWorld;
 import fi.dy.masa.servux.mixin.infosub.ServerWorldMixin;
+
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.ChunkProviderServer;
 
 public class PerDimensionObjectCounts
 {
@@ -42,12 +44,12 @@ public class PerDimensionObjectCounts
         return this.scheduledTicks;
     }
 
-    public void update(ServerWorld world)
+    public void update(WorldServer world)
     {
-        this.loadedChunks = world.getChunkManager().size();
-        this.loadedEntities = world.field_23572.size();
-        this.loadedBlockEntities = world.blockEntities.size();
-        this.loadedBlockEntitiesTicking = world.tickingBlockEntities.size();
+        this.loadedChunks = ((ChunkProviderServer) world.getChunkProvider()).getLoadedChunkCount();
+        this.loadedEntities = world.loadedEntityList.size();
+        this.loadedBlockEntities = world.loadedTileEntityList.size();
+        this.loadedBlockEntitiesTicking = world.tickableTileEntities.size();
         this.scheduledTicks = ((ServerWorldMixin) world).servux_getScheduledTicks().size();
     }
 }

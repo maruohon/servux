@@ -4,11 +4,12 @@ import java.util.Objects;
 import com.google.gson.JsonElement;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.PacketByteBuf;
+
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.play.server.SPacketCustomPayload;
+import net.minecraft.util.ResourceLocation;
 
 public class PacketUtils
 {
@@ -19,10 +20,10 @@ public class PacketUtils
      * @return a slice of the buffer
      * @see io.netty.buffer.ByteBuf#slice()
      */
-    public static PacketByteBuf slice(ByteBuf buf)
+    public static PacketBuffer slice(ByteBuf buf)
     {
         Objects.requireNonNull(buf, "PacketUtils#slice(): ByteBuf cannot be null");
-        return new PacketByteBuf(buf.slice());
+        return new PacketBuffer(buf.slice());
     }
 
     /**
@@ -32,41 +33,41 @@ public class PacketUtils
      * @return a slice of the buffer
      * @see io.netty.buffer.ByteBuf#retainedSlice()
      */
-    public static PacketByteBuf retainedSlice(ByteBuf buf)
+    public static PacketBuffer retainedSlice(ByteBuf buf)
     {
         Objects.requireNonNull(buf, "PacketUtils#retainedSlice(): ByteBuf cannot be null");
-        return new PacketByteBuf(buf.retainedSlice());
+        return new PacketBuffer(buf.retainedSlice());
     }
 
     /**
      * Sends a packet type ID as a VarInt, and then the given Compound tag.
      */
-    public static void sendPacketTypeAndCompound(Identifier channel,
+    public static void sendPacketTypeAndCompound(ResourceLocation channel,
                                                  int packetType,
-                                                 CompoundTag data,
-                                                 ServerPlayNetworkHandler networkHandler)
+                                                 NBTTagCompound data,
+                                                 NetHandlerPlayServer networkHandler)
     {
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
         buf.writeVarInt(packetType);
         buf.writeCompoundTag(data);
 
-        networkHandler.sendPacket(new CustomPayloadS2CPacket(channel.toString(), buf));
+        networkHandler.sendPacket(new SPacketCustomPayload(channel.toString(), buf));
     }
 
-    public static void send(Identifier channel, PacketByteBuf packet, ServerPlayNetworkHandler networkHandler)
+    public static void send(ResourceLocation channel, PacketBuffer packet, NetHandlerPlayServer networkHandler)
     {
-        networkHandler.sendPacket(new CustomPayloadS2CPacket(channel.toString(), packet));
+        networkHandler.sendPacket(new SPacketCustomPayload(channel.toString(), packet));
     }
 
-    public static void sendJson(Identifier channel, JsonElement element, ServerPlayNetworkHandler networkHandler)
+    public static void sendJson(ResourceLocation channel, JsonElement element, NetHandlerPlayServer networkHandler)
     {
         sendString(channel, element.toString(), networkHandler);
     }
 
-    public static void sendString(Identifier channel, String str, ServerPlayNetworkHandler networkHandler)
+    public static void sendString(ResourceLocation channel, String str, NetHandlerPlayServer networkHandler)
     {
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
         buf.writeString(str);
-        networkHandler.sendPacket(new CustomPayloadS2CPacket(channel.toString(), buf));
+        networkHandler.sendPacket(new SPacketCustomPayload(channel.toString(), buf));
     }
 }

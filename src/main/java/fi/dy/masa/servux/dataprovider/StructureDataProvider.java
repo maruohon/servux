@@ -9,37 +9,37 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.structure.StructurePiece;
-import net.minecraft.structure.StructureStart;
-import net.minecraft.structure.Structures;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.EndChunkGenerator;
-import net.minecraft.world.gen.chunk.FlatChunkGenerator;
-import net.minecraft.world.gen.chunk.NetherChunkGenerator;
-import net.minecraft.world.gen.chunk.OverworldChunkGenerator;
-import net.minecraft.world.gen.feature.AbstractTempleFeature;
-import net.minecraft.world.gen.feature.OceanMonumentFeature;
-import net.minecraft.world.gen.feature.StrongholdFeature;
-import net.minecraft.world.gen.feature.StructureFeature;
-import net.minecraft.world.gen.feature.VillageFeature;
-import fi.dy.masa.servux.mixin.structure.EndChunkGeneratorMixin;
-import fi.dy.masa.servux.mixin.structure.FlatChunkGeneratorMixin;
-import fi.dy.masa.servux.mixin.structure.NetherChunkGeneratorMixin;
-import fi.dy.masa.servux.mixin.structure.OverworldChunkGeneratorMixin;
-import fi.dy.masa.servux.mixin.structure.ServerChunkCacheMixin;
-import fi.dy.masa.servux.mixin.structure.StructureFeatureMixin;
+import fi.dy.masa.servux.mixin.structure.ChunkGeneratorEndMixin;
+import fi.dy.masa.servux.mixin.structure.ChunkGeneratorFlatMixin;
+import fi.dy.masa.servux.mixin.structure.ChunkGeneratorHellMixin;
+import fi.dy.masa.servux.mixin.structure.ChunkGeneratorOverworldMixin;
+import fi.dy.masa.servux.mixin.structure.MapGenStructureMixin;
+import fi.dy.masa.servux.mixin.structure.ChunkProviderServerMixin;
 import fi.dy.masa.servux.network.ClientPacketHandler;
 import fi.dy.masa.servux.network.PacketSplitter;
 import fi.dy.masa.servux.network.packet.StructureDataPacketHandler;
 import fi.dy.masa.servux.util.PositionUtils;
 import fi.dy.masa.servux.util.data.PlayerDimensionPosition;
+
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.gen.ChunkGeneratorEnd;
+import net.minecraft.world.gen.ChunkGeneratorFlat;
+import net.minecraft.world.gen.ChunkGeneratorHell;
+import net.minecraft.world.gen.ChunkGeneratorOverworld;
+import net.minecraft.world.gen.IChunkGenerator;
+import net.minecraft.world.gen.structure.MapGenScatteredFeature;
+import net.minecraft.world.gen.structure.MapGenStronghold;
+import net.minecraft.world.gen.structure.MapGenStructure;
+import net.minecraft.world.gen.structure.MapGenStructureIO;
+import net.minecraft.world.gen.structure.MapGenVillage;
+import net.minecraft.world.gen.structure.StructureComponent;
+import net.minecraft.world.gen.structure.StructureOceanMonument;
+import net.minecraft.world.gen.structure.StructureStart;
 
 public class StructureDataProvider extends BaseDataProvider
 {
@@ -48,7 +48,7 @@ public class StructureDataProvider extends BaseDataProvider
     protected final Map<UUID, PlayerDimensionPosition> registeredPlayers = new HashMap<>();
     //protected final ArrayListMultimap<UUID, StructureStart> syncedStructures = ArrayListMultimap.create();
     protected final Set<UUID> movedPlayers = new HashSet<>();
-    protected final CompoundTag metadata = new CompoundTag();
+    protected final NBTTagCompound metadata = new NBTTagCompound();
     protected int retainDistanceChunks;
 
     protected StructureDataProvider()
@@ -57,9 +57,9 @@ public class StructureDataProvider extends BaseDataProvider
               StructureDataPacketHandler.PROTOCOL_VERSION,
               "Structure Bounding Boxes data for structures such as Witch Huts, Ocean Monuments, Nether Fortresses etc.");
 
-        this.metadata.putString("id", StructureDataPacketHandler.CHANNEL.toString());
-        this.metadata.putBoolean("no_timeout", true);
-        this.metadata.putInt("version", StructureDataPacketHandler.PROTOCOL_VERSION);
+        this.metadata.setString("id", StructureDataPacketHandler.CHANNEL.toString());
+        this.metadata.setBoolean("no_timeout", true);
+        this.metadata.setInteger("version", StructureDataPacketHandler.PROTOCOL_VERSION);
 
         this.shouldTick = true;
         this.setTickRate(100);
@@ -78,20 +78,20 @@ public class StructureDataProvider extends BaseDataProvider
         {
             // System.out.printf("=======================\n");
             // System.out.printf("tick: %d - %s\n", tickCounter, this.isEnabled());
-            this.retainDistanceChunks = server.getPlayerManager().getViewDistance() + 2;
+            this.retainDistanceChunks = server.getPlayerList().getViewDistance() + 2;
             Iterator<UUID> uuidIter = this.registeredPlayers.keySet().iterator();
 
             while (uuidIter.hasNext())
             {
                 UUID uuid = uuidIter.next();
-                ServerPlayerEntity player = server.getPlayerManager().getPlayer(uuid);
+                EntityPlayerMP player = server.getPlayerList().getPlayerByUUID(uuid);
 
                 if (player != null)
                 {
                     if (this.checkForDimensionChange(player) == false &&
                         this.movedPlayers.contains(uuid))
                     {
-                        this.syncStructuresToPlayerWithinRange(player, player.server.getPlayerManager().getViewDistance());
+                        this.syncStructuresToPlayerWithinRange(player, player.server.getPlayerList().getViewDistance());
                     }
                 }
                 else
@@ -102,9 +102,9 @@ public class StructureDataProvider extends BaseDataProvider
         }
     }
 
-    public void onStartedWatchingChunk(ServerPlayerEntity player, Chunk chunk)
+    public void onStartedWatchingChunk(EntityPlayerMP player, Chunk chunk)
     {
-        UUID uuid = player.getUuid();
+        UUID uuid = player.getUniqueID();
 
         if (this.registeredPlayers.containsKey(uuid))
         {
@@ -112,9 +112,9 @@ public class StructureDataProvider extends BaseDataProvider
         }
     }
 
-    public boolean register(ServerPlayerEntity player)
+    public boolean register(EntityPlayerMP player)
     {
-        UUID uuid = player.getUuid();
+        UUID uuid = player.getUniqueID();
         boolean registered = false;
 
         if (this.registeredPlayers.containsKey(uuid) == false)
@@ -122,7 +122,7 @@ public class StructureDataProvider extends BaseDataProvider
             PacketSplitter.sendPacketTypeAndCompound(StructureDataPacketHandler.CHANNEL, StructureDataPacketHandler.PACKET_S2C_METADATA, this.metadata, player);
 
             this.registeredPlayers.put(uuid, new PlayerDimensionPosition(player));
-            this.syncStructuresToPlayerWithinRange(player, player.server.getPlayerManager().getViewDistance());
+            this.syncStructuresToPlayerWithinRange(player, player.server.getPlayerList().getViewDistance());
 
             registered = true;
             //System.out.printf("register\n");
@@ -131,9 +131,9 @@ public class StructureDataProvider extends BaseDataProvider
         return registered;
     }
 
-    public boolean unregister(ServerPlayerEntity player)
+    public boolean unregister(EntityPlayerMP player)
     {
-        UUID uuid = player.getUuid();
+        UUID uuid = player.getUniqueID();
         // System.out.printf("unregister\n");
 
         if (this.registeredPlayers.remove(uuid) != null)
@@ -151,14 +151,14 @@ public class StructureDataProvider extends BaseDataProvider
         //this.syncedStructures.removeAll(uuid);
     }
 
-    protected void syncStructuresToPlayerWithinRange(ServerPlayerEntity player, int chunkRadius)
+    protected void syncStructuresToPlayerWithinRange(EntityPlayerMP player, int chunkRadius)
     {
-        UUID uuid = player.getUuid();
+        UUID uuid = player.getUniqueID();
 
         this.registeredPlayers.computeIfAbsent(uuid, (u) -> new PlayerDimensionPosition(player)).setPosition(player);
 
         List<StructureStart> list = new ArrayList<>();
-        ChunkGenerator generator = ((ServerChunkCacheMixin) ((ServerWorld) player.getEntityWorld()).getChunkManager()).servux_getChunkGenerator();
+        IChunkGenerator generator = ((ChunkProviderServerMixin) player.getEntityWorld().getChunkProvider()).servux_getChunkGenerator();
 
         this.getStructuresFromGenerator(list, generator, new BlockPos(player), chunkRadius * 16);
         this.sendStructuresToPlayer(list, player);
@@ -167,16 +167,16 @@ public class StructureDataProvider extends BaseDataProvider
         //System.out.printf("syncStructuresToPlayerWithinRange() - size: %d\n", list.size());
     }
 
-    protected boolean checkForDimensionChange(ServerPlayerEntity player)
+    protected boolean checkForDimensionChange(EntityPlayerMP player)
     {
-        UUID uuid = player.getUuid();
+        UUID uuid = player.getUniqueID();
         PlayerDimensionPosition playerPos = this.registeredPlayers.get(uuid);
 
         if (playerPos == null || playerPos.dimensionChanged(player))
         {
             this.removeCachedDataForPlayer(uuid);
             this.registeredPlayers.computeIfAbsent(uuid, (u) -> new PlayerDimensionPosition(player)).setPosition(player);
-            this.syncStructuresToPlayerWithinRange(player, player.server.getPlayerManager().getViewDistance()); // TODO
+            this.syncStructuresToPlayerWithinRange(player, player.server.getPlayerList().getViewDistance()); // TODO
             return true;
         }
 
@@ -184,58 +184,58 @@ public class StructureDataProvider extends BaseDataProvider
     }
 
     protected void getStructuresFromGenerator(List<StructureStart> listOut,
-                                              ChunkGenerator chunkGenerator,
+                                              IChunkGenerator chunkGenerator,
                                               BlockPos center,
                                               int maxRange)
     {
-        if (chunkGenerator instanceof OverworldChunkGenerator)
+        if (chunkGenerator instanceof ChunkGeneratorOverworld)
         {
-            StructureFeature feature;
+            MapGenStructure feature;
 
-            feature = ((OverworldChunkGeneratorMixin) chunkGenerator).servux_getOceanMonumentFeature();
+            feature = ((ChunkGeneratorOverworldMixin) chunkGenerator).servux_getOceanMonumentFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
 
-            feature = ((OverworldChunkGeneratorMixin) chunkGenerator).servux_getTempleFeature();
+            feature = ((ChunkGeneratorOverworldMixin) chunkGenerator).servux_getTempleFeature();
             this.addTempleStructuresWithinRange(listOut, feature, center, maxRange);
 
-            feature = ((OverworldChunkGeneratorMixin) chunkGenerator).servux_getStrongholdFeature();
+            feature = ((ChunkGeneratorOverworldMixin) chunkGenerator).servux_getStrongholdFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
 
-            feature = ((OverworldChunkGeneratorMixin) chunkGenerator).servux_getVillageFeature();
+            feature = ((ChunkGeneratorOverworldMixin) chunkGenerator).servux_getVillageFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
 
-            feature = ((OverworldChunkGeneratorMixin) chunkGenerator).servux_getWoodlandMansionFeature();
+            feature = ((ChunkGeneratorOverworldMixin) chunkGenerator).servux_getWoodlandMansionFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
         }
-        else if (chunkGenerator instanceof NetherChunkGenerator)
+        else if (chunkGenerator instanceof ChunkGeneratorHell)
         {
-            StructureFeature feature = ((NetherChunkGeneratorMixin) chunkGenerator).servux_getFortressFeature();
+            MapGenStructure feature = ((ChunkGeneratorHellMixin) chunkGenerator).servux_getFortressFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
         }
-        else if (chunkGenerator instanceof EndChunkGenerator)
+        else if (chunkGenerator instanceof ChunkGeneratorEnd)
         {
-            StructureFeature feature = ((EndChunkGeneratorMixin) chunkGenerator).servux_getEndCityFeature();
+            MapGenStructure feature = ((ChunkGeneratorEndMixin) chunkGenerator).servux_getEndCityFeature();
             this.addStructuresWithinRange(listOut, feature, center, maxRange);
         }
-        else if (chunkGenerator instanceof FlatChunkGenerator)
+        else if (chunkGenerator instanceof ChunkGeneratorFlat)
         {
-            Map<String, StructureFeature> map = ((FlatChunkGeneratorMixin) chunkGenerator).servux_getStructureFeatureMap();
+            Map<String, MapGenStructure> map = ((ChunkGeneratorFlatMixin) chunkGenerator).servux_getStructureFeatureMap();
 
-            for (StructureFeature feature : map.values())
+            for (MapGenStructure feature : map.values())
             {
-                if (feature instanceof OceanMonumentFeature)
+                if (feature instanceof StructureOceanMonument)
                 {
                     this.addStructuresWithinRange(listOut, feature, center, maxRange);
                 }
-                else if (feature instanceof AbstractTempleFeature)
+                else if (feature instanceof MapGenScatteredFeature)
                 {
                     this.addTempleStructuresWithinRange(listOut, feature, center, maxRange);
                 }
-                else if (feature instanceof StrongholdFeature)
+                else if (feature instanceof MapGenStronghold)
                 {
                     this.addStructuresWithinRange(listOut, feature, center, maxRange);
                 }
-                else if (feature instanceof VillageFeature)
+                else if (feature instanceof MapGenVillage)
                 {
                     this.addStructuresWithinRange(listOut, feature, center, maxRange);
                 }
@@ -243,9 +243,9 @@ public class StructureDataProvider extends BaseDataProvider
         }
     }
 
-    protected void addStructuresWithinRange(List<StructureStart> listOut, StructureFeature feature, BlockPos center, int maxRange)
+    protected void addStructuresWithinRange(List<StructureStart> listOut, MapGenStructure feature, BlockPos center, int maxRange)
     {
-        Long2ObjectMap<StructureStart> structureMap = ((StructureFeatureMixin) feature).servux_getStructureMap();
+        Long2ObjectMap<StructureStart> structureMap = ((MapGenStructureMixin) feature).servux_getStructureMap();
 
         for (StructureStart start : structureMap.values())
         {
@@ -256,17 +256,17 @@ public class StructureDataProvider extends BaseDataProvider
         }
     }
 
-    protected void addTempleStructuresWithinRange(List<StructureStart> listOut, StructureFeature feature, BlockPos center, int maxRange)
+    protected void addTempleStructuresWithinRange(List<StructureStart> listOut, MapGenStructure feature, BlockPos center, int maxRange)
     {
-        Long2ObjectMap<StructureStart> structureMap = ((StructureFeatureMixin) feature).servux_getStructureMap();
+        Long2ObjectMap<StructureStart> structureMap = ((MapGenStructureMixin) feature).servux_getStructureMap();
 
         for (StructureStart start : structureMap.values())
         {
-            List<StructurePiece> components = start.getChildren();
+            List<StructureComponent> components = start.getComponents();
 
             if (components.size() == 1 && PositionUtils.isBoxWithinRange(start.getBoundingBox(), center, maxRange))
             {
-                String id = Structures.getName(components.get(0));
+                String id = MapGenStructureIO.getStructureComponentName(components.get(0));
 
                 if (id != null)
                 {
@@ -276,34 +276,34 @@ public class StructureDataProvider extends BaseDataProvider
         }
     }
 
-    protected ListTag asListTag(List<StructureStart> list)
+    protected NBTTagList asListTag(List<StructureStart> list)
     {
-        ListTag listOut = new ListTag();
+        NBTTagList listOut = new NBTTagList();
 
         for (StructureStart structure : list)
         {
-            CompoundTag tag = structure.method_27890(structure.method_27902(), structure.method_27903());
+            NBTTagCompound tag = structure.writeStructureComponentsToNBT(structure.getChunkPosX(), structure.getChunkPosZ());
 
-            if (structure instanceof AbstractTempleFeature.Start)
+            if (structure instanceof MapGenScatteredFeature.Start)
             {
-                List<StructurePiece> pieces = structure.getChildren();
+                List<StructureComponent> pieces = structure.getComponents();
 
                 if (pieces.size() == 1)
                 {
-                    tag.putString("id", Structures.getName(structure) + "." + Structures.getName(pieces.get(0)));
+                    tag.setString("id", MapGenStructureIO.getStructureStartName(structure) + "." + MapGenStructureIO.getStructureComponentName(pieces.get(0)));
                 }
             }
 
-            listOut.add(tag);
+            listOut.appendTag(tag);
         }
 
         return listOut;
     }
 
-    protected void sendStructuresToPlayer(List<StructureStart> list, ServerPlayerEntity player)
+    protected void sendStructuresToPlayer(List<StructureStart> list, EntityPlayerMP player)
     {
-        CompoundTag tag = new CompoundTag();
-        tag.put("Structures", this.asListTag(list));
+        NBTTagCompound tag = new NBTTagCompound();
+        tag.setTag("Structures", this.asListTag(list));
 
         PacketSplitter.sendPacketTypeAndCompound(StructureDataPacketHandler.CHANNEL,
                                                  StructureDataPacketHandler.PACKET_S2C_STRUCTURE_DATA,

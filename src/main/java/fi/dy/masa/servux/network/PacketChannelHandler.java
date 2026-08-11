@@ -5,11 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiConsumer;
 import com.google.common.base.Charsets;
-import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.util.PacketByteBuf;
-import fi.dy.masa.servux.mixin.network.CustomPayloadC2SPacketMixin;
 import fi.dy.masa.servux.network.util.PacketUtils;
+
+import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.play.client.CPacketCustomPayload;
 
 public class PacketChannelHandler
 {
@@ -53,11 +53,11 @@ public class PacketChannelHandler
     }
 
     protected void handleReceivedData(String channel,
-                                      PacketByteBuf data,
+                                      PacketBuffer data,
                                       ClientPacketHandler handler,
-                                      ServerPlayNetworkHandler netHandler)
+                                      NetHandlerPlayServer netHandler)
     {
-        PacketByteBuf buf;
+        PacketBuffer buf;
 
         if (handler.usePacketSplitter())
         {
@@ -79,8 +79,8 @@ public class PacketChannelHandler
     }
 
     protected void updateRegistrationForChannels(List<String> channels,
-                                                 BiConsumer<ClientPacketHandler, ServerPlayNetworkHandler> action,
-                                                 ServerPlayNetworkHandler netHandler)
+                                                 BiConsumer<ClientPacketHandler, NetHandlerPlayServer> action,
+                                                 NetHandlerPlayServer netHandler)
     {
         for (String channel : channels)
         {
@@ -94,11 +94,10 @@ public class PacketChannelHandler
         }
     }
 
-    public void processPacketFromClient(CustomPayloadC2SPacket packet, ServerPlayNetworkHandler netHandler)
+    public void processPacketFromClient(CPacketCustomPayload packet, NetHandlerPlayServer netHandler)
     {
-        CustomPayloadC2SPacketMixin accessor = ((CustomPayloadC2SPacketMixin) packet);
-        String channel = accessor.servux_getChannel();
-        PacketByteBuf data = accessor.servux_getData();
+        String channel = packet.getChannelName();
+        PacketBuffer data = packet.getBufferData();
         ClientPacketHandler handler;
 
         synchronized (this.handlers)
@@ -108,7 +107,7 @@ public class PacketChannelHandler
 
         if (handler != null)
         {
-            final PacketByteBuf slice = PacketUtils.retainedSlice(data);
+            final PacketBuffer slice = PacketUtils.retainedSlice(data);
             schedule(() -> this.handleReceivedData(channel, slice, handler, netHandler), netHandler);
         }
         else if (channel.equals(REGISTER))
@@ -123,12 +122,12 @@ public class PacketChannelHandler
         }
     }
 
-    public static void schedule(Runnable task, ServerPlayNetworkHandler netHandler)
+    public static void schedule(Runnable task, NetHandlerPlayServer netHandler)
     {
-        netHandler.player.server.addTask(task);
+        netHandler.player.server.addScheduledTask(task);
     }
 
-    public static List<String> getChannels(PacketByteBuf buf)
+    public static List<String> getChannels(PacketBuffer buf)
     {
         buf = PacketUtils.slice(buf);
         buf.readerIndex(0);

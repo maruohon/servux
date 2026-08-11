@@ -20,7 +20,7 @@ public class TpsData
 
     public void update(MinecraftServer server)
     {
-        double mspt = MathHelper.average(server.lastTickLengths) / 1000000D;
+        double mspt = MathHelper.average(server.tickTimeArray) / 1000000D;
         this.serverMspt = (float) mspt;
         this.serverTps = (float) (mspt <= 50 ? 20D : (1000D / mspt));
     }

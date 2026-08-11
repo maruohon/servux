@@ -6,21 +6,22 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.profiler.Profiler;
 import fi.dy.masa.servux.dataprovider.DataProviderManager;
+
+import net.minecraft.profiler.Profiler;
+import net.minecraft.server.MinecraftServer;
 
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixin
 {
     @Shadow @Final public Profiler profiler;
-    @Shadow private int ticks;
+    @Shadow private int tickCounter;
 
     @Inject(method = "tick", at = @At("RETURN"))
     private void servux_onTickEnd(CallbackInfo ci)
     {
-        this.profiler.push("servux_tick");
-        DataProviderManager.INSTANCE.tickProviders((MinecraftServer) (Object) this, this.ticks);
-        this.profiler.pop();
+        this.profiler.startSection("servux_tick");
+        DataProviderManager.INSTANCE.tickProviders((MinecraftServer) (Object) this, this.tickCounter);
+        this.profiler.endSection();
     }
 }

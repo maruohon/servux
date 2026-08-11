@@ -1,9 +1,10 @@
 package fi.dy.masa.servux.util;
 
 import java.util.Optional;
-import net.minecraft.block.BlockState;
-import net.minecraft.state.property.DirectionProperty;
-import net.minecraft.state.property.Property;
+
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.state.IBlockState;
 
 public class BlockUtils
 {
@@ -11,13 +12,13 @@ public class BlockUtils
      * Returns the first PropertyDirection property from the provided state, if any.
      * @return the first PropertyDirection, or empty() if there are no such properties
      */
-    public static Optional<DirectionProperty> getFirstDirectionProperty(BlockState state)
+    public static Optional<PropertyDirection> getFirstDirectionProperty(IBlockState state)
     {
-        for (Property<?> prop : state.getEntries().keySet())
+        for (IProperty<?> prop : state.getProperties().keySet())
         {
-            if (prop instanceof DirectionProperty)
+            if (prop instanceof PropertyDirection)
             {
-                return Optional.of((DirectionProperty) prop);
+                return Optional.of((PropertyDirection) prop);
             }
         }
 

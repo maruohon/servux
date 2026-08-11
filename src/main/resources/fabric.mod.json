@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "servux",
-	"name": "ServuX",
+	"name": "Servux",
 	"version": "${mod_version}",
 
 	"description": "Server-side support and integration for masa's client mods",
@@ -10,7 +10,7 @@
 		"masa"
 	],
 	"contact": {
-		"homepage": "https://www.curseforge.com/minecraft/mc-mods/servux",
+		"homepage": "https://modrinth.com/mod/servux",
 		"sources": "https://github.com/maruohon/servux",
 		"twitter": "https://twitter.com/maruohon",
 		"discord": "https://discord.gg/2FgywHj"

@@ -5,20 +5,21 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.PlayerChunkWatchingEntry;
-import net.minecraft.world.chunk.Chunk;
 import fi.dy.masa.servux.dataprovider.StructureDataProvider;
 
-@Mixin(PlayerChunkWatchingEntry.class)
-public abstract class PlayerChunkWatchingEntryMixin
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.server.management.PlayerChunkMapEntry;
+import net.minecraft.world.chunk.Chunk;
+
+@Mixin(PlayerChunkMapEntry.class)
+public abstract class PlayerChunkMapEntryMixin
 {
     @Shadow private Chunk chunk;
 
-    @Inject(method = "add",
+    @Inject(method = "addPlayer",
             at = @At(value = "INVOKE", remap = false,
                      target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
-    private void servux_onAdd(ServerPlayerEntity player, CallbackInfo ci)
+    private void servux_onAdd(EntityPlayerMP player, CallbackInfo ci)
     {
         if (StructureDataProvider.INSTANCE.isEnabled())
         {
